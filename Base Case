@@ -1,7 +1,6 @@
 #Updated SW code with CenCO2PIP Temp with 1 degree unccertainty
 #wT w rw original working
 using Interpolations
-module CO2SystemExample1
 using CO2System, Statistics, StatsPlots, Printf, Interpolations
 
 #******* Scaling DIC to dbl using CO2system******* 
@@ -43,14 +42,11 @@ ALK_grid = 2200:10:2500
 a_grid = [a_fun(λ0, ALK) for λ0 in λ0_grid, ALK in ALK_grid]
 itp = extrapolate(interpolate((λ0_grid, ALK_grid), a_grid, Gridded(Linear())), Line())
 
-export itp
-end # module CO2SystemExample1
 
 using CSV, DataFrames, Turing, MCMCChains, Distributions, Statistics, Printf
 using DifferentialEquations, SciMLBase, StatsPlots
 #using DataInterpolations
 using Distributions
-using .CO2SystemExample1: itp
 
 csv_path = joinpath(homedir(), "Downloads", "cenco2pip_500kyr_testrev_ppm_12.csv")
 df = CSV.read(csv_path, DataFrame)
