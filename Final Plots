@@ -11,15 +11,15 @@ using CO2System
 
 #******* model trajectories ******* 
 #base case
-csv_path1 = joinpath(homedir(), "Desktop", "fullchain_final_TU1_1500")
+csv_path1 = joinpath(homedir(), "Desktop", "fullchain_final_TU1_1500_copy")
 #increased uncertainties
-csv_path2 = joinpath(homedir(), "Desktop", "fullchain_final_loose_1500")
+csv_path2 = joinpath(homedir(), "Desktop", "fullchain_final_loose_1500_copy")
 #constant weathering sensitivity
-csv_path3 = joinpath(homedir(), "Desktop", "fullchain_final_constant_w_1500")
+csv_path3 = joinpath(homedir(), "Desktop", "fullchain_final_constant_w_1500_copy")
 #other forcing as a random walk
-csv_path4 = joinpath(homedir(), "Desktop", "fullchain_final_O_rw_1500")
+csv_path4 = joinpath(homedir(), "Desktop", "fullchain_final_O_rw_1500_copy")
 #increased upper bounds on degassing
-csv_path5 = joinpath(homedir(), "Desktop", "fullchain_final_inc_G_1500")
+csv_path5 = joinpath(homedir(), "Desktop", "fullchain_final_inc_G_1500_copy")
 
 df1 = CSV.read(csv_path1, DataFrame)
 df2 = CSV.read(csv_path2, DataFrame)
@@ -75,7 +75,7 @@ itp = extrapolate(interpolate((λ0_grid, ALK_grid), a_grid, Gridded(Linear())), 
 
 
 #******* CenCO2PIP reconstructions ******* 
-csv_path_rec = joinpath(homedir(), "Downloads", "cenco2pip_500kyr_testrev_ppm_12.csv")
+csv_path_rec = joinpath(homedir(), "Downloads", "cenco2pip_500kyr_testrev_ppm_12_copy.csv")
 df_rec = CSV.read(csv_path_rec, DataFrame)
 
 t = Float64.(df_rec.Age)
