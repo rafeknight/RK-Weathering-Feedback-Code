@@ -162,7 +162,7 @@ hi_vals = fsr_hi_itp.(t)
     CF ~ Normal(C_med[1], C_sd[1])
     TF ~ Normal(T_diff[1], T_sd)
 
-#******* Bounds and penalties for fsr and G *******  
+#******* Bounds and penalties for fsr and a *******  
     
     #fsr penalty 
     bound_w = max.(hi_vals .- lo_vals, 1e-6)
