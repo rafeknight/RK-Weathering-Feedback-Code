@@ -1,0 +1,253 @@
+#loosend CO2 + T
+#wT w rw original working
+using Interpolations
+using CO2System, Statistics, StatsPlots, Printf, Interpolations
+
+#******* Scaling DIC to dbl using CO2system******* 
+#note this is minor and largely left over from earlier versions of the model
+
+SW_MASS = 1.4e21
+UMOL = 1e-6
+SCALE = SW_MASS * UMOL
+
+pCO2_vec = 280:17.2:2000 
+#ALK_vec = 2300:2.3:2530 #ALK increasing with temp
+#ALK_vec = 2300:2.3:2070 #ALK decreasing with temp
+x_dbl = log2.(pCO2_vec ./ 280)
+
+par1type = 1
+par4type = 4
+sal = 35.0
+presin = presout = 3690
+sil = 0#50.0
+po4 = 0#2.0
+pHscale = 1
+k1k2c = 4
+kso4c = 1
+
+
+function a_fun(λ0, ALK)
+    T_vec = x_dbl .* λ0 .+ 4.0
+    result, = CO2System.CO2SYS(ALK, pCO2_vec, par1type, par4type,
+                               sal, T_vec, T_vec,
+                               presin, presout,
+                               sil, po4,
+                               pHscale, k1k2c, kso4c)
+    DIC = result[:, 2] 
+    y_scaled = DIC .* SCALE .* 1e-16
+    return a = cov(x_dbl, y_scaled) / var(x_dbl)
+end
+
+#******* building gridded values for a based on ALK and λO ******* 
+λ0_grid = 0.0:1:16.0
+ALK_grid = 2200:10:2500
+a_grid = [a_fun(λ0, ALK) for λ0 in λ0_grid, ALK in ALK_grid]
+itp = extrapolate(interpolate((λ0_grid, ALK_grid), a_grid, Gridded(Linear())), Line())
+
+
+using CSV, DataFrames, Turing, MCMCChains, Distributions, Statistics, Printf
+using DifferentialEquations, SciMLBase, StatsPlots
+#using DataInterpolations
+using Distributions
+
+csv_path = joinpath(homedir(), "Downloads", "cenco2pip_500kyr_testrev_ppm_12.csv") #"cenco2pip_1myr_testrev_ppm.csv", "cenco2pip_500kyr_Evans_aug_17", "cenco2pip_500kyr_testrev_ppm_12.csv", "cenco2pip_500kyr_Evans_aug_17.csv
+df = CSV.read(csv_path, DataFrame)
+
+#******* t, C, T and uncertainties derived from CenCO2PIP *******
+#note T sd was set to 1 degree in the base case and uncertainties are doubled in this test 
+t = Float64.(df.Age)
+C_med = Float64.(df.CO2_50_doublings)
+C_sd = ((Float64.(df.CO2_975_doublings) .- Float64.(df.CO2_025_doublings)) ./ 4) .+ 0.25
+T_med = Float64.(df.GMST_50)
+T_diff = T_med                     
+T_sd = 2.0
+#T_sd = (Float64.(df.GMST_975) .- Float64.(df.GMST_025)) ./ 4
+
+
+#******* MCMC model *******
+#largely following Turing.jl Bayesian Differential Equations Tutorial
+
+#******* ODE Problem *******   
+function cen_ode!(du, u, p, τ)
+    w, a, λ, η, G, O = p
+    C, T = u
+    du[1] = (G(τ) - w(τ) * T )/ a(τ)
+    du[2] = (C + O(τ) - T / λ(τ)) / η
+    #du[2] = (C - T / λ(τ)) / η
+end
+
+prob_template = ODEProblem(cen_ode!, [0.0, 0.0], (t[1], t[end]))
+
+#******* Degassing bounds *******  
+t_10 = t[1] .+ [0.0,  10.0, 20.0, 30.0, 40.0, 50.0, 60.0]
+#Hi Lo fsr = estimates from  Krissansen Totton 2017 - Cogné and Humler -  Hansen and Wallmann + Marcilly 2021
+fsr_lo_10 =    [1.15, 1.17, 1.17, 1.02, 0.98, 0.99,  1.0]
+fsr_hi_10 =    [1.58 , 1.45, 1.37, 1.27, 1.27, 1.07, 1.0]
+fsr_lo_itp = LinearInterpolation(t_10, fsr_lo_10; extrapolation_bc=Line())
+fsr_hi_itp = LinearInterpolation(t_10, fsr_hi_10; extrapolation_bc=Line())
+lo_vals = fsr_lo_itp.(t)
+hi_vals = fsr_hi_itp.(t)
+
+#******* MCMC model *******
+#largely following Turing.jl Bayesian Differential Equations Tutorial
+@model function cen_model(t, C_med, C_sd, T_diff, T_sd, prob_template, lo_vals, hi_vals)
+    n = length(t)
+
+#******* random walk for fsr centered on median *******
+    m_fsr = (lo_vals .+ hi_vals) ./ 2
+    #fsr0 = 1                          
+    σfsr ~ truncated(Normal(0.05, 0.02); lower = 0, upper = 0.2)
+    ζ ~ filldist(Normal(), n-1)
+    Δfsr = σfsr .* ζ
+    fsr_rw = m_fsr .+ reverse([0.0; 0.0 .+ cumsum(reverse(Δfsr))])
+
+    G0 ~ truncated(Normal(6e2, 1.5e2); lower=0.0)
+
+#******* random walk for ESS (note λ = ESS in the model not 1/ESS) *******
+    λ0 ~ truncated(Normal(8, 2); lower=1e-2, upper = 16)
+    σλ ~ truncated(Normal(0.025, 0.01); lower = 0, upper = 0.2)
+    δ ~ filldist(Normal(), n-1)
+    Δlogλ = σλ .* δ
+
+    logλ_rw = reverse([log(λ0); log(λ0) .+ cumsum(reverse(Δlogλ))])
+    λlog = LinearInterpolation(t, logλ_rw; extrapolation_bc=Line())
+    λ(τ) = exp(clamp(λlog(τ), log(1e-2), log(30.0)))
+
+#******* other forcing (just solar intensity in the base case) *******
+    m = (9 / 420)
+    SI_dbl = m / 3.7
+    SI_0 = - SI_dbl * 60
+    O(τ) = SI_0 + SI_dbl .* τ
+    # priors
+#******* global mean ALK (for a - which doesn't matter) *******  
+    ALK ~ Normal(2357,7)
+
+#******* heat capacity *******  
+    η ~ truncated(Normal(1.27e-4, 5.4e-5); lower=1e-6, upper = 0.1) # Was 1e-6 before
+    #w ~ Uniform(0,100)
+
+#******* random walk for weathering sensitivity *******  
+    # for T
+    αT = 20 / λ0
+    βT = 300 / λ0
+
+    μwT ~ Uniform(αT , βT)
+    σwT = αT
+
+    #for C (unused)
+    #αC = 20
+    #βC = 300
+
+    #μwC ~ Uniform(αC , βC)
+    #σwC = αC
+
+    #w ~ truncated(Normal(20, 30); lower = 0, upper = 100)
+    #for T
+    w0 ~ truncated(Normal(μwT, σwT); lower = 0, upper = 80)
+    #w0 ~ LogNormal(log(15), 0.4)
+    #w0 ~ truncated(Normal(30, 10); lower = 0, upper = 100)
+    σw ~ truncated(Normal(0.015, 0.01); lower = 0, upper = 0.2) # testing with 0.015
+    δw ~ filldist(Normal(), n-1)
+    Δlogw = σw .* δw
+
+    logw_rw = reverse([log(w0); log(w0) .+ cumsum(reverse(Δlogw))])
+    wlog = LinearInterpolation(t, logw_rw; extrapolation_bc=Line())
+    w(τ) = exp(clamp(wlog(τ), log(1e-2), log(100.0)))
+
+    #for C
+    #wC ~ truncated(Normal(μwC, σwC); lower = 0, upper = 400)
+
+#******* random walk for a (this term doesn't really matter) *******  
+    a0 = max(itp(λ0, ALK), 1e-2)
+    σa ~ truncated(Normal(0.05, 0.02); lower = 0, upper = 0.2)
+    ϵ ~ filldist(Normal(), n-1)
+    Δa = σa .* ϵ
+
+    a0_rw = reverse([0.0; 0.0 .+ cumsum(reverse(Δa))])
+    a_rw = a0 .+ a0_rw
+
+#******* Final T and C where the model is initialized *******  
+    CF ~ Normal(C_med[1], C_sd[1])
+    TF ~ Normal(T_diff[1], T_sd)
+
+#******* Bounds and penalties for fsr and a *******  
+
+    #fsr penalty
+    bound_w = max.(hi_vals .- lo_vals, 1e-6)
+
+    over_lo = max.(lo_vals .- fsr_rw, 0.0) ./ bound_w
+    over_hi = max.(fsr_rw .- hi_vals, 0.0) ./ bound_w
+
+    pen = mean((over_lo.^2 .+ over_hi.^2)) / (0.0025)
+    Turing.@addlogprob!(-pen)
+
+    #a penalty
+    lo_a = -2.5
+    hi_a = 2.5
+    bound_a = hi_a - lo_a
+
+    over_lo_a = max.(lo_a .- a0_rw, 0.0) ./ bound_a
+    over_hi_a = max.(a0_rw .- hi_a, 0.0) ./ bound_a
+
+    pen_a = mean(over_lo_a.^2 .+ over_hi_a.^2) / (0.0025)
+    Turing.@addlogprob!(-pen_a)
+
+    a_itp = LinearInterpolation(t, a_rw; extrapolation_bc=Line())
+    a(τ) = max(a_itp(τ), 1)
+
+    fsr = LinearInterpolation(t, fsr_rw; extrapolation_bc=Line())
+    G(τ) = (G0 * fsr(τ)) - G0
+
+#******* running the ODE problem *******  
+    prob = remake(prob_template, u0=[CF, TF], p=(w, a, λ, η, G, O))
+    sol = try
+        solve(prob, Rodas5P() ; saveat=t)
+    catch
+        Turing.@addlogprob!(-Inf); return
+    end
+
+    if sol.retcode != SciMLBase.ReturnCode.Success || !all(isfinite, Array(sol))
+        Turing.@addlogprob!(-Inf); return
+    end
+
+    for i in 1:n
+        u_i = sol(t[i])
+        C_med[i] ~ Normal(u_i[1], C_sd[i])
+        T_diff[i] ~ Normal(u_i[2], T_sd)
+    end
+end
+
+#******* sampling parameters *******  
+n_chains = 3
+
+init  = (η = 1.28e-4, G0 = 600, w0 = 15)
+inits = fill(init, n_chains)
+
+model = cen_model(t, C_med, C_sd, T_diff, T_sd, prob_template, lo_vals, hi_vals)
+
+sampler = NUTS(0.9; max_depth=7)
+@time chain = sample(
+    cen_model(t, C_med, C_sd, T_diff, T_sd, prob_template, lo_vals, hi_vals),
+    sampler, MCMCThreads(), 1500, n_chains;
+    initial_params=inits, progress=false
+)
+
+#******* displaying the (t = 0) posteriors to check convergence visually*******  
+#note just a visual all r̂ are in the summary which is commented out
+function select_params(ch::Chains, pars)
+    idx = findall(in(pars), names(ch))
+    ch[:, idx, :]
+end
+
+plot_chains = select_params(chain, [:λ0, :w0, :η, :G0, :CF, :TF])
+display(plot(plot_chains; layout = (6,1), legend = false, size = (900, 250 * length(names(plot_chains)))))
+
+
+#summarize(chain)
+#savefig("/Users/rafeknight/Desktop/tue19_chains_wT_evans.png")
+#df = DataFrame(chain)
+#CSV.write("/Users/rafeknight/Desktop/fullchain_final_loose_1500", df)
+
+#summary = summarize(chain)
+#df = DataFrame(summary)
+#CSV.write("/Users/rafeknight/Desktop/loose_1500_summary.csv", df)
