@@ -740,7 +740,7 @@ O_hi = mapslices(q -> quantile(q, 0.975), O_post_mat; dims = 2)[:]
 
 pO = plot(
     t, O_mean;
-    xlabel = "Age (Myr)",
+    xlabel = "Age (myr)",
     ylabel = "Doublings",
     title = "Other Forcing Posterior",
     color = :darkorange,
