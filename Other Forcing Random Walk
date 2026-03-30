@@ -49,7 +49,7 @@ using DifferentialEquations, SciMLBase, StatsPlots
 #using DataInterpolations
 using Distributions
 
-csv_path = joinpath(homedir(), "Downloads", "cenco2pip_500kyr_testrev_ppm_12.csv") #"cenco2pip_1myr_testrev_ppm.csv", "cenco2pip_500kyr_Evans_aug_17", "cenco2pip_500kyr_testrev_ppm_12.csv", "cenco2pip_500kyr_Evans_aug_17.csv
+csv_path = joinpath(homedir(), "Downloads", "cenco2pip_500kyr_testrev_ppm_12_copy.csv") #"cenco2pip_1myr_testrev_ppm.csv", "cenco2pip_500kyr_Evans_aug_17", "cenco2pip_500kyr_testrev_ppm_12.csv", "cenco2pip_500kyr_Evans_aug_17.csv
 df = CSV.read(csv_path, DataFrame)
 
 #******* t, C, T and uncertainties derived from CenCO2PIP *******
