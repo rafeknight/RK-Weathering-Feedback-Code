@@ -14,8 +14,7 @@ The file named "Other Forcing Random Walk" represents the model formulation wher
 
 **Plots File:**
 
-The model exports posterior parameters (for each time step)
-To create each plot, the random walks must be recreated from the posteriors for each time step, which is done in the file named "Final Plots"
+The model exports posterior parameters (for each time step). To create each plot, the random walks must be recreated from the posteriors, which is done in the file named "Final Plots".
 
 **Data Files**
 
