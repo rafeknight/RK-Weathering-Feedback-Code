@@ -19,4 +19,13 @@ The model exports posterior parameters (for each time step). To create each plot
 **Data Files**
 
 The Data required for the model and  plotting is as follows:
-CenCO2PIP data converted to doublings: "cenco2pip_500kyr_testrev_ppm"
+
+CenCO2PIP data converted to doublings: "cenco2pip_500kyr_testrev_ppm_12_copy"
+
+Base Case: fullchain_final_TU1_1500_copy
+
+Increased Uncertainty: fullchain_final_loose_1500_copy
+
+Constant Weathering Sensitivity: fullchain_final_constant_w_1500_copy
+
+Other Forcing Random Walk: fullchain_final_O_rw_1500_copy
