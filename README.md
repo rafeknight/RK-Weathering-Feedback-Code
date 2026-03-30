@@ -32,7 +32,7 @@ Constant Weathering Sensitivity: fullchain_final_constant_w_1500_copy
 
 Other Forcing Random Walk: fullchain_final_O_rw_1500_copy
 
-Increased Degassing Bounds: fullchain_final_inc_rG_1500_copy
+Increased Degassing Bounds: fullchain_final_inc_G_1500_copy
 
 **Other Notes:**
 The model uses CO2System.jl to create the DIC scaling factor. See: https://github.com/mvdh7/CO2System.jl for instructions on installing
