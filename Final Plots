@@ -649,25 +649,25 @@ plot!(pC, t, C_mean_base;
 
 plot!(pC, t, C_mean_inc_u;
       ribbon = (C_mean_inc_u .- C_lo_inc_u, C_hi_inc_u .- C_mean_inc_u),
-      fillalpha = 0.3,
+      fillalpha = 0.15,
       color = :dodgerblue, linewidth = 5,
       label = "Increased uncertainties (95%)")
 
 plot!(pC, t, C_mean_const_w;
       ribbon = (C_mean_const_w .- C_lo_const_w, C_hi_const_w .- C_mean_const_w),
-      fillalpha = 0.3,
+      fillalpha = 0.15,
       color = :purple, linewidth = 5,
       label = "Constant weathering sensitivity (95%)")
 
 plot!(pC, t, C_mean_O_rw;
       ribbon = (C_mean_O_rw .- C_lo_O_rw, C_hi_O_rw .- C_mean_O_rw),
-      fillalpha = 0.3,
+      fillalpha = 0.15,
       color = :darkorange, linewidth = 5,
       label = "Other forcing random walk (95%)")
 
 plot!(pC, t, C_mean_inc_fsr;
       ribbon = (C_mean_inc_fsr .- C_lo_inc_fsr, C_hi_inc_fsr .- C_mean_inc_fsr),
-      fillalpha = 0.3,
+      fillalpha = 0.15,
       color = :seagreen, linewidth = 5,
       label = "Increased degassing bounds (95%)")
 
@@ -684,25 +684,25 @@ plot!(pT, t, T_mean_base;
 
 plot!(pT, t, T_mean_inc_u;
       ribbon = (T_mean_inc_u .- T_lo_inc_u, T_hi_inc_u .- T_mean_inc_u),
-      fillalpha = 0.3,
+      fillalpha = 0.15,
       color = :dodgerblue, linewidth = 5,
       label = "Increased uncertainties (95%)")
 
 plot!(pT, t, T_mean_const_w;
       ribbon = (T_mean_const_w .- T_lo_const_w, T_hi_const_w .- T_mean_const_w),
-      fillalpha = 0.3,
+      fillalpha = 0.15,
       color = :purple, linewidth = 5,
       label = "Constant weathering sensitivity (95%)")
 
 plot!(pT, t, T_mean_O_rw;
       ribbon = (T_mean_O_rw .- T_lo_O_rw, T_hi_O_rw .- T_mean_O_rw),
-      fillalpha = 0.3,
+      fillalpha = 0.15,
       color = :darkorange, linewidth = 5,
       label = "Other forcing random walk (95%)")
 
 plot!(pT, t, T_mean_inc_fsr;
       ribbon = (T_mean_inc_fsr .- T_lo_inc_fsr, T_hi_inc_fsr .- T_mean_inc_fsr),
-      fillalpha = 0.3,
+      fillalpha = 0.15,
       color = :seagreen, linewidth = 5,
       label = "Increased degassing bounds (95%)")
 
@@ -801,25 +801,25 @@ plot!(pESS, t, ESS_mean_base;
 
 plot!(pESS, t, ESS_mean_inc_u;
       ribbon = (ESS_mean_inc_u .- ESS_lo_inc_u, ESS_hi_inc_u .- ESS_mean_inc_u),
-      fillalpha = 0.3,
+      fillalpha = 0.15,
       color = :dodgerblue, linewidth = 5,
       label = "Increased uncertainties (95%)")
 
 plot!(pESS, t, ESS_mean_const_w;
       ribbon = (ESS_mean_const_w .- ESS_lo_const_w, ESS_hi_const_w .- ESS_mean_const_w),
-      fillalpha = 0.3,
+      fillalpha = 0.15,
       color = :purple, linewidth = 5,
       label = "Constant weathering sensitivity (95%)")
 
 plot!(pESS, t, ESS_mean_O_rw;
       ribbon = (ESS_mean_O_rw .- ESS_lo_O_rw, ESS_hi_O_rw .- ESS_mean_O_rw),
-      fillalpha = 0.3,
+      fillalpha = 0.15,
       color = :darkorange, linewidth = 5,
       label = "Other forcing random walk (95%)")
 
 plot!(pESS, t, ESS_mean_inc_fsr;
       ribbon = (ESS_mean_inc_fsr .- ESS_lo_inc_fsr, ESS_hi_inc_fsr .- ESS_mean_inc_fsr),
-      fillalpha = 0.3,
+      fillalpha = 0.15,
       color = :seagreen, linewidth = 5,
       label = "Increased degassing bounds (95%)")
 
@@ -1006,29 +1006,29 @@ plot!(pwT, t, w_mean_base;
 
 plot!(pwT, t, w_mean_inc_u;
       ribbon = (w_mean_inc_u .- w_lo_inc_u, w_hi_inc_u .- w_mean_inc_u),
-      fillalpha = 0.3,
+      fillalpha = 0.15,
       color = :dodgerblue, linewidth = 5,
       label = "Increased uncertainties (95%)")
 
 plot!(pwT, t, w_mean_const;
       ribbon = (w_mean_const .- w_lo_const, w_hi_const .- w_mean_const),
-      fillalpha = 0.3,
+      fillalpha = 0.15,
       color = :purple, linewidth = 5,
       label = "Constant weathering sensitivity (95%)")
 
 plot!(pwT, t, w_mean_O_rw;
       ribbon = (w_mean_O_rw .- w_lo_O_rw, w_hi_O_rw .- w_mean_O_rw),
-      fillalpha = 0.3,
+      fillalpha = 0.15,
       color = :darkorange, linewidth = 5,
       label = "Other forcing random walk (95%)")
 
 plot!(pwT, t, w_mean_inc_fsr;
       ribbon = (w_mean_inc_fsr .- w_lo_inc_fsr, w_hi_inc_fsr .- w_mean_inc_fsr),
-      fillalpha = 0.3,
+      fillalpha = 0.15,
       color = :seagreen, linewidth = 5,
       label = "Increased degassing bounds (95%)")
 
-#display(pwT)
+display(pwT)
 
 
 #******* feedback plot ******* 
@@ -1264,7 +1264,7 @@ plot!(pFw, pCO2_grid, feedback_mean5_O_rw;
 plot!(pFw, pCO2_grid, feedback_mean5_inc_fsr;
       ribbon = (feedback_mean5_inc_fsr .- feedback_lo5_inc_fsr, feedback_hi5_inc_fsr .- feedback_mean5_inc_fsr),
       fillalpha = 0.05, linestyle = :dash,
-      color = :seagreen, linewidth = 4,
+      color = :seagreen, linewidth = 5,
       label = "Increased degassing bounds Eocene (95%)")
 
 #display(pFw)
@@ -1488,26 +1488,26 @@ plot!(pG, t, G_mean_base;
 
 plot!(pG, t, G_mean_inc_u;
       ribbon = (G_mean_inc_u .- G_lo_inc_u, G_hi_inc_u .- G_mean_inc_u),
-      fillalpha = 0.2,
+      fillalpha = 0.15,
       color = :dodgerblue, linewidth = 5,
       label = "Increased uncertainties (95%)")
 
 plot!(pG, t, G_mean_const_w;
       ribbon = (G_mean_const_w .- G_lo_const_w, G_hi_const_w .- G_mean_const_w),
-      fillalpha = 0.2,
+      fillalpha = 0.15,
       color = :purple, linewidth = 5,
       label = "Constant weathering sensitivity (95%)")
 
 plot!(pG, t, G_mean_O_rw;
       ribbon = (G_mean_O_rw .- G_lo_O_rw, G_hi_O_rw .- G_mean_O_rw),
-      fillalpha = 0.2,
+      fillalpha = 0.15,
       color = :darkorange, linewidth = 5,
       label = "Other forcing random walk (95%)")
 
 plot!(pG, t, G_mean_inc_fsr;
       ribbon = (G_mean_inc_fsr .- G_lo_inc_fsr, G_hi_inc_fsr .- G_mean_inc_fsr),
-      fillalpha = 0.2,
-      color = :seagreen, linewidth = 3,
+      fillalpha = 0.15,
+      color = :seagreen, linewidth = 5,
       label = "Increased degassing bounds (95%)")
 
 plot!(pG, t, G0_lo_vals;
@@ -1528,7 +1528,7 @@ plot!(pG, t, G0_mean_vals;
 #display(pG)
 #******* saving final figures *******
 
-#savefig(p_combined_C_T, joinpath(homedir(), "Downloads", "RK_C_T_final.pdf"))
-#savefig(p_combined_ESS_O, joinpath(homedir(), "Downloads", "RK_ESS_final.pdf"))
-#savefig(p_combined_feedback_w, joinpath(homedir(), "Downloads", "RK_feedback_final.pdf"))
-#savefig(pG, joinpath(homedir(), "Downloads", "RK_degassing_final.pdf"))
+savefig(p_combined_C_T, joinpath(homedir(), "Downloads", "RK_C_T_final.pdf"))
+savefig(p_combined_ESS_O, joinpath(homedir(), "Downloads", "RK_ESS_final.pdf"))
+savefig(p_combined_feedback_w, joinpath(homedir(), "Downloads", "RK_feedback_final.pdf"))
+savefig(pG, joinpath(homedir(), "Downloads", "RK_degassing_final.pdf"))
