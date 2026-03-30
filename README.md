@@ -12,6 +12,8 @@ The file named "Constant Weathering Sensitivity" represents the model formulatio
 
 The file named "Other Forcing Random Walk" represents the model formulation where O is allowed to vary as a random walk
 
+The file named "Increased Degassing Bounds" represents the model formulation where degassing bounds are increased by 10%
+
 **Plots File:**
 
 The model exports posterior parameters (for each time step). To create each plot, the random walks must be recreated from the posteriors, which is done in the file named "Final Plots".
@@ -29,6 +31,8 @@ Increased Uncertainty: fullchain_final_loose_1500_copy
 Constant Weathering Sensitivity: fullchain_final_constant_w_1500_copy
 
 Other Forcing Random Walk: fullchain_final_O_rw_1500_copy
+
+Increased Degassing Bounds: fullchain_final_inc_rG_1500_copy
 
 **Other Notes:**
 The model uses CO2System.jl to create the DIC scaling factor. See: https://github.com/mvdh7/CO2System.jl for instructions on installing
