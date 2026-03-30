@@ -1,0 +1,1392 @@
+#Final Plots
+
+#Chain and Model upload
+using CSV, DataFrames, Turing, MCMCChains, Distributions, Statistics, Printf
+using DifferentialEquations, SciMLBase, StatsPlots
+#using DataInterpolations
+using Interpolations
+using Random
+using Measures
+using CO2System
+
+#******* model trajectories ******* 
+#base case
+csv_path1 = joinpath(homedir(), "Desktop", "fullchain_final_TU1_1500")
+#increased uncertainties
+csv_path2 = joinpath(homedir(), "Desktop", "fullchain_final_loose_1500")
+#constant weathering sensitivity
+csv_path3 = joinpath(homedir(), "Desktop", "fullchain_final_constant_w_1500")
+#other forcing as a random walk
+csv_path4 = joinpath(homedir(), "Desktop", "fullchain_final_O_rw_1500")
+
+df1 = CSV.read(csv_path1, DataFrame)
+df2 = CSV.read(csv_path2, DataFrame)
+df3 = CSV.read(csv_path3, DataFrame)
+df4 = CSV.read(csv_path4, DataFrame)
+
+chain1 = Chains(Matrix(df1), names(df1))
+chain2 = Chains(Matrix(df2), names(df2))
+chain3 = Chains(Matrix(df3), names(df3))
+chain4 = Chains(Matrix(df4), names(df4))
+
+t = 0.25:0.5:60
+
+
+#******* running CO2system (minor part of the model) ******* 
+SW_MASS = 1.4e21
+UMOL = 1e-6
+SCALE = SW_MASS * UMOL
+
+pCO2_vec = 280:17.2:2000 
+#ALK_vec = 2300:2.3:2530 #ALK increasing with temp
+#ALK_vec = 2300:2.3:2070 #ALK decreasing with temp
+x_dbl = log2.(pCO2_vec ./ 280)
+
+par1type = 1
+par4type = 4
+sal = 35.0
+presin = presout = 3000
+sil = 50.0
+po4 = 2.0
+pHscale = 1
+k1k2c = 4
+kso4c = 1
+
+function a_fun(λ0, ALK)
+    T_vec = x_dbl .* λ0 .+ 4.0
+    result, = CO2System.CO2SYS(ALK, pCO2_vec, par1type, par4type,
+                               sal, T_vec, T_vec,
+                               presin, presout,
+                               sil, po4,
+                               pHscale, k1k2c, kso4c)
+    DIC = result[:, 2] 
+    y_scaled = DIC .* SCALE .* 1e-16
+    return a = cov(x_dbl, y_scaled) / var(x_dbl)
+end
+
+λ0_grid = 0.0:1:16.0
+ALK_grid = 2200:10:2500
+a_grid = [a_fun(λ0, ALK) for λ0 in λ0_grid, ALK in ALK_grid]
+itp = extrapolate(interpolate((λ0_grid, ALK_grid), a_grid, Gridded(Linear())), Line())
+
+
+#******* CenCO2PIP reconstructions ******* 
+csv_path_rec = joinpath(homedir(), "Downloads", "cenco2pip_500kyr_testrev_ppm_12.csv")
+df_rec = CSV.read(csv_path_rec, DataFrame)
+
+t = Float64.(df_rec.Age)
+C_med = Float64.(df_rec.CO2_50_doublings)
+C_sd = (Float64.(df_rec.CO2_975_doublings) .- Float64.(df_rec.CO2_025_doublings)) ./ 4
+T_diff = Float64.(df_rec.GMST_50)
+#T_diff = T_med                     
+T_sd = 1.0
+#T_sd = (Float64.(df.GMST_975_doublings) .- Float64.(df.GMST_025_doublings)) ./ 4
+
+
+#******* shared forcing bounds ******* 
+t_10 = t[1] .+ [0.0, 10.0, 20.0, 30.0, 40.0, 50.0, 60.0]
+
+#base case bounds
+fsr_lo_10 = [1.15, 1.17, 1.17, 1.02, 0.98, 0.99, 1.0]
+fsr_hi_10 = [1.58, 1.45, 1.37, 1.27, 1.27, 1.07, 1.0]
+
+fsr_lo_itp = LinearInterpolation(t_10, fsr_lo_10)
+fsr_hi_itp = LinearInterpolation(t_10, fsr_hi_10)
+
+lo_vals = fsr_lo_itp.(t)
+hi_vals = fsr_hi_itp.(t)
+
+
+#******* model base case ******* 
+function cen_ode!(du, u, p, τ)
+    w, a, λ, η, G, O = p
+    C, T = u
+    du[1] = (G(τ) - w(τ) * T) / a(τ)
+    du[2] = (C + O(τ) - T / λ(τ)) / η
+end
+
+prob_template = ODEProblem(cen_ode!, [0.0, 0.0], (t[1], t[end]))
+
+
+#******* constant w case ******* 
+function cen_ode_const_w!(du, u, p, τ)
+    w, a, λ, η, G, O = p
+    C, T = u
+    du[1] = (G(τ) - w * T) / a(τ)
+    du[2] = (C + O(τ) - T / λ(τ)) / η
+end
+
+prob_const_w = ODEProblem(cen_ode_const_w!, [0.0, 0.0], (t[1], t[end]))
+
+
+#******* other forcing random walk case ******* 
+function cen_ode_O_rw!(du, u, p, τ)
+    w, a, λ, η, G, O = p
+    C, T = u
+    du[1] = (G(τ) - w(τ) * T) / a(τ)
+    du[2] = (C + O(τ) - T / λ(τ)) / η
+end
+
+prob_O_rw = ODEProblem(cen_ode_O_rw!, [0.0, 0.0], (t[1], t[end]))
+
+
+#******* plot settings ******* 
+default(
+    guidefont = font(32, :bold),
+    tickfont = font(22),
+    legendfont = font(10,),
+    titlefont = font(32, :bold),
+    annotationfontsize = 35
+)
+
+
+#******* C and T posteriors model base case ******* 
+#variable names in the paper where switched to all be δs and σs 
+#in the code ϵ etc.. all represent step size volatility terms
+#see paper appendix for more details
+function C_T_post!(chain1, t, prob_template, lo_vals, hi_vals, itp; draws = 4500)
+    n = length(t)
+
+    σfsr = vec(Array(chain1[:σfsr]))
+    ζ_mat = hcat([vec(Array(chain1[Symbol("ζ[$i]")])) for i in 1:n-1]...)
+
+    G0 = vec(Array(chain1[:G0]))
+
+    λ0 = vec(Array(chain1[:λ0]))
+    σλ = vec(Array(chain1[:σλ]))
+    δ_mat = hcat([vec(Array(chain1[Symbol("δ[$i]")])) for i in 1:n-1]...)
+
+    w0 = vec(Array(chain1[:w0]))
+    σw = vec(Array(chain1[:σw]))
+    δw_mat = hcat([vec(Array(chain1[Symbol("δw[$i]")])) for i in 1:n-1]...)
+
+    ALK = vec(Array(chain1[:ALK]))
+    σa = vec(Array(chain1[:σa]))
+    ϵ_mat = hcat([vec(Array(chain1[Symbol("ϵ[$i]")])) for i in 1:n-1]...)
+
+    η = vec(Array(chain1[:η]))
+    CF = vec(Array(chain1[:CF]))
+    TF = vec(Array(chain1[:TF]))
+
+    Ndraw = length(σfsr)
+    nd = min(draws, Ndraw)
+
+    m_fsr = (lo_vals .+ hi_vals) ./ 2
+
+    m = (9 / 420)
+    SI_dbl = m / 3.7
+    SI_0 = -SI_dbl * 60
+    O(τ) = SI_0 + SI_dbl .* τ
+
+    C_post = Matrix{Float64}(undef, n, nd)
+    T_post = Matrix{Float64}(undef, n, nd)
+
+    k = 0
+    for j in 1:nd
+        Δfsr = σfsr[j] .* vec(ζ_mat[j, :])
+        fsr_rw = m_fsr .+ reverse([0.0; 0.0 .+ cumsum(reverse(Δfsr))])
+        fsr = LinearInterpolation(t, fsr_rw)
+        G(τ) = (G0[j] * fsr(τ)) - G0[j]
+
+        Δlogλ = σλ[j] .* vec(δ_mat[j, :])
+        logλ_rw = reverse([log(λ0[j]); log(λ0[j]) .+ cumsum(reverse(Δlogλ))])
+        λlog = LinearInterpolation(t, logλ_rw)
+        λ(τ) = exp(clamp(λlog(τ), log(1e-2), log(30.0)))
+
+        Δlogw = σw[j] .* vec(δw_mat[j, :])
+        logw_rw = reverse([log(w0[j]); log(w0[j]) .+ cumsum(reverse(Δlogw))])
+        wlog = LinearInterpolation(t, logw_rw)
+        w(τ) = exp(clamp(wlog(τ), log(1e-2), log(100.0)))
+
+        Δa = σa[j] .* vec(ϵ_mat[j, :])
+        a0 = max(itp(λ0[j], ALK[j]), 1e-2)
+        a0_rw = reverse([0.0; 0.0 .+ cumsum(reverse(Δa))])
+        a_rw = a0 .+ a0_rw
+        a_itp = LinearInterpolation(t, a_rw)
+        a(τ) = max(a_itp(τ), 1)
+
+        u0 = [CF[j], TF[j]]
+        prob = remake(prob_template, u0 = u0, p = (w, a, λ, η[j], G, O))
+        sol = try
+            solve(prob, Rodas5P(); saveat = t)
+        catch
+            nothing
+        end
+
+        if sol !== nothing && sol.retcode == SciMLBase.ReturnCode.Success && all(isfinite, Array(sol))
+            k += 1
+            C_post[:, k] = sol[1, :]
+            T_post[:, k] = sol[2, :]
+        end
+    end
+
+    C_post = C_post[:, 1:k]
+    T_post = T_post[:, 1:k]
+
+    C_post = reverse(C_post; dims = 1)
+    T_post = reverse(T_post; dims = 1)
+
+    return (C_post = C_post, T_post = T_post)
+end
+
+
+#******* C and T posteriors increased uncertainty ******* 
+function C_T_post_inc_u!(chain2, t, prob_template, lo_vals, hi_vals, itp; draws = 4500)
+    n = length(t)
+
+    σfsr_inc_u = vec(Array(chain2[:σfsr]))
+    ζ_mat_inc_u = hcat([vec(Array(chain2[Symbol("ζ[$i]")])) for i in 1:n-1]...)
+
+    G0_inc_u = vec(Array(chain2[:G0]))
+
+    λ0_inc_u = vec(Array(chain2[:λ0]))
+    σλ_inc_u = vec(Array(chain2[:σλ]))
+    δ_mat_inc_u = hcat([vec(Array(chain2[Symbol("δ[$i]")])) for i in 1:n-1]...)
+
+    w0_inc_u = vec(Array(chain2[:w0]))
+    σw_inc_u = vec(Array(chain2[:σw]))
+    δw_mat_inc_u = hcat([vec(Array(chain2[Symbol("δw[$i]")])) for i in 1:n-1]...)
+
+    ALK_inc_u = vec(Array(chain2[:ALK]))
+    σa_inc_u = vec(Array(chain2[:σa]))
+    ϵ_mat_inc_u = hcat([vec(Array(chain2[Symbol("ϵ[$i]")])) for i in 1:n-1]...)
+
+    η_inc_u = vec(Array(chain2[:η]))
+    CF_inc_u = vec(Array(chain2[:CF]))
+    TF_inc_u = vec(Array(chain2[:TF]))
+
+    Ndraw = length(σfsr_inc_u)
+    nd = min(draws, Ndraw)
+
+    m_fsr_inc_u = (lo_vals .+ hi_vals) ./ 2
+
+    m = (9 / 420)
+    SI_dbl = m / 3.7
+    SI_0 = -SI_dbl * 60
+    O_inc_u(τ) = SI_0 + SI_dbl .* τ
+
+    C_post_inc_u = Matrix{Float64}(undef, n, nd)
+    T_post_inc_u = Matrix{Float64}(undef, n, nd)
+
+    k = 0
+    for j in 1:nd
+        Δfsr_inc_u = σfsr_inc_u[j] .* vec(ζ_mat_inc_u[j, :])
+        fsr_rw_inc_u = m_fsr_inc_u .+ reverse([0.0; 0.0 .+ cumsum(reverse(Δfsr_inc_u))])
+        fsr_inc_u = LinearInterpolation(t, fsr_rw_inc_u)
+        G_inc_u(τ) = (G0_inc_u[j] * fsr_inc_u(τ)) - G0_inc_u[j]
+
+        Δlogλ_inc_u = σλ_inc_u[j] .* vec(δ_mat_inc_u[j, :])
+        logλ_rw_inc_u = reverse([log(λ0_inc_u[j]); log(λ0_inc_u[j]) .+ cumsum(reverse(Δlogλ_inc_u))])
+        λlog_inc_u = LinearInterpolation(t, logλ_rw_inc_u)
+        λ_inc_u(τ) = exp(clamp(λlog_inc_u(τ), log(1e-2), log(30.0)))
+
+        Δlogw_inc_u = σw_inc_u[j] .* vec(δw_mat_inc_u[j, :])
+        logw_rw_inc_u = reverse([log(w0_inc_u[j]); log(w0_inc_u[j]) .+ cumsum(reverse(Δlogw_inc_u))])
+        wlog_inc_u = LinearInterpolation(t, logw_rw_inc_u)
+        w_inc_u(τ) = exp(clamp(wlog_inc_u(τ), log(1e-2), log(100.0)))
+
+        Δa_inc_u = σa_inc_u[j] .* vec(ϵ_mat_inc_u[j, :])
+        a0_inc_u = max(itp(λ0_inc_u[j], ALK_inc_u[j]), 1e-2)
+        a0_rw_inc_u = reverse([0.0; 0.0 .+ cumsum(reverse(Δa_inc_u))])
+        a_rw_inc_u = a0_inc_u .+ a0_rw_inc_u
+        a_itp_inc_u = LinearInterpolation(t, a_rw_inc_u)
+        a_inc_u(τ) = max(a_itp_inc_u(τ), 1)
+
+        u0_inc_u = [CF_inc_u[j], TF_inc_u[j]]
+        prob_inc_u = remake(prob_template, u0 = u0_inc_u, p = (w_inc_u, a_inc_u, λ_inc_u, η_inc_u[j], G_inc_u, O_inc_u))
+        sol_inc_u = try
+            solve(prob_inc_u, Rodas5P(); saveat = t)
+        catch
+            nothing
+        end
+
+        if sol_inc_u !== nothing && sol_inc_u.retcode == SciMLBase.ReturnCode.Success && all(isfinite, Array(sol_inc_u))
+            k += 1
+            C_post_inc_u[:, k] = sol_inc_u[1, :]
+            T_post_inc_u[:, k] = sol_inc_u[2, :]
+        end
+    end
+
+    C_post_inc_u = C_post_inc_u[:, 1:k]
+    T_post_inc_u = T_post_inc_u[:, 1:k]
+
+    C_post_inc_u = reverse(C_post_inc_u; dims = 1)
+    T_post_inc_u = reverse(T_post_inc_u; dims = 1)
+
+    return (C_post_inc_u = C_post_inc_u, T_post_inc_u = T_post_inc_u)
+end
+
+
+#******* C and T posteriors constant w ******* 
+function C_T_post_const_w!(chain3, t, prob_const_w, lo_vals, hi_vals, itp; draws = 4500)
+    n = length(t)
+
+    σfsr_const_w = vec(Array(chain3[:σfsr]))
+    ζ_mat_const_w = hcat([vec(Array(chain3[Symbol("ζ[$i]")])) for i in 1:n-1]...)
+
+    G0_const_w = vec(Array(chain3[:G0]))
+
+    λ0_const_w = vec(Array(chain3[:λ0]))
+    σλ_const_w = vec(Array(chain3[:σλ]))
+    δ_mat_const_w = hcat([vec(Array(chain3[Symbol("δ[$i]")])) for i in 1:n-1]...)
+
+    w0_const_w = vec(Array(chain3[:w0]))
+
+    ALK_const_w = vec(Array(chain3[:ALK]))
+    σa_const_w = vec(Array(chain3[:σa]))
+    ϵ_mat_const_w = hcat([vec(Array(chain3[Symbol("ϵ[$i]")])) for i in 1:n-1]...)
+
+    η_const_w = vec(Array(chain3[:η]))
+    CF_const_w = vec(Array(chain3[:CF]))
+    TF_const_w = vec(Array(chain3[:TF]))
+
+    Ndraw = length(σfsr_const_w)
+    nd = min(draws, Ndraw)
+
+    m_fsr_const_w = (lo_vals .+ hi_vals) ./ 2
+
+    m = (9 / 420)
+    SI_dbl = m / 3.7
+    SI_0 = -SI_dbl * 60
+    O_const_w(τ) = SI_0 + SI_dbl .* τ
+
+    C_post_const_w = Matrix{Float64}(undef, n, nd)
+    T_post_const_w = Matrix{Float64}(undef, n, nd)
+
+    k = 0
+    for j in 1:nd
+        Δfsr_const_w = σfsr_const_w[j] .* vec(ζ_mat_const_w[j, :])
+        fsr_rw_const_w = m_fsr_const_w .+ reverse([0.0; 0.0 .+ cumsum(reverse(Δfsr_const_w))])
+        fsr_const_w = LinearInterpolation(t, fsr_rw_const_w)
+        G_const_w(τ) = (G0_const_w[j] * fsr_const_w(τ)) - G0_const_w[j]
+
+        Δlogλ_const_w = σλ_const_w[j] .* vec(δ_mat_const_w[j, :])
+        logλ_rw_const_w = reverse([log(λ0_const_w[j]); log(λ0_const_w[j]) .+ cumsum(reverse(Δlogλ_const_w))])
+        λlog_const_w = LinearInterpolation(t, logλ_rw_const_w)
+        λ_const_w(τ) = exp(clamp(λlog_const_w(τ), log(1e-2), log(30.0)))
+
+        Δa_const_w = σa_const_w[j] .* vec(ϵ_mat_const_w[j, :])
+        a0_const_w = max(itp(λ0_const_w[j], ALK_const_w[j]), 1e-2)
+        a0_rw_const_w = reverse([0.0; 0.0 .+ cumsum(reverse(Δa_const_w))])
+        a_rw_const_w = a0_const_w .+ a0_rw_const_w
+        a_itp_const_w = LinearInterpolation(t, a_rw_const_w)
+        a_const_w(τ) = max(a_itp_const_w(τ), 1)
+
+        u0_const_w = [CF_const_w[j], TF_const_w[j]]
+        prob_const_w_draw = remake(prob_const_w, u0 = u0_const_w, p = (w0_const_w[j], a_const_w, λ_const_w, η_const_w[j], G_const_w, O_const_w))
+        sol_const_w = try
+            solve(prob_const_w_draw, Rodas5P(); saveat = t)
+        catch
+            nothing
+        end
+
+        if sol_const_w !== nothing && sol_const_w.retcode == SciMLBase.ReturnCode.Success && all(isfinite, Array(sol_const_w))
+            k += 1
+            C_post_const_w[:, k] = sol_const_w[1, :]
+            T_post_const_w[:, k] = sol_const_w[2, :]
+        end
+    end
+
+    C_post_const_w = C_post_const_w[:, 1:k]
+    T_post_const_w = T_post_const_w[:, 1:k]
+
+    C_post_const_w = reverse(C_post_const_w; dims = 1)
+    T_post_const_w = reverse(T_post_const_w; dims = 1)
+
+    return (C_post_const_w = C_post_const_w, T_post_const_w = T_post_const_w)
+end
+
+
+#******* C and T posteriors other forcing random walk ******* 
+function C_T_post_O_rw!(chain4, t, prob_O_rw, lo_vals, hi_vals, itp; draws = 4500)
+    n = length(t)
+
+    Ofsr_O_rw = vec(Array(chain4[:Ofsr]))
+    Oζ_mat_O_rw = hcat([vec(Array(chain4[Symbol("Oζ[$i]")])) for i in 1:n-1]...)
+
+    σfsr_O_rw = vec(Array(chain4[:σfsr]))
+    ζ_mat_O_rw = hcat([vec(Array(chain4[Symbol("ζ[$i]")])) for i in 1:n-1]...)
+
+    G0_O_rw = vec(Array(chain4[:G0]))
+
+    λ0_O_rw = vec(Array(chain4[:λ0]))
+    σλ_O_rw = vec(Array(chain4[:σλ]))
+    δ_mat_O_rw = hcat([vec(Array(chain4[Symbol("δ[$i]")])) for i in 1:n-1]...)
+
+    w0_O_rw = vec(Array(chain4[:w0]))
+    σw_O_rw = vec(Array(chain4[:σw]))
+    δw_mat_O_rw = hcat([vec(Array(chain4[Symbol("δw[$i]")])) for i in 1:n-1]...)
+
+    ALK_O_rw = vec(Array(chain4[:ALK]))
+    σa_O_rw = vec(Array(chain4[:σa]))
+    ϵ_mat_O_rw = hcat([vec(Array(chain4[Symbol("ϵ[$i]")])) for i in 1:n-1]...)
+
+    η_O_rw = vec(Array(chain4[:η]))
+    CF_O_rw = vec(Array(chain4[:CF]))
+    TF_O_rw = vec(Array(chain4[:TF]))
+
+    Ndraw = length(σfsr_O_rw)
+    nd = min(draws, Ndraw)
+
+    m_fsr_O_rw = (lo_vals .+ hi_vals) ./ 2
+
+    C_post_O_rw = Matrix{Float64}(undef, n, nd)
+    T_post_O_rw = Matrix{Float64}(undef, n, nd)
+
+    k = 0
+    for j in 1:nd
+        ΔO_O_rw = Ofsr_O_rw[j] .* vec(Oζ_mat_O_rw[j, :])
+        O_rw = 0.0 .+ reverse([0.0; 0.0 .+ cumsum(reverse(ΔO_O_rw))])
+        O_O_rw = LinearInterpolation(t, O_rw)
+
+        Δfsr_O_rw = σfsr_O_rw[j] .* vec(ζ_mat_O_rw[j, :])
+        fsr_rw_O_rw = m_fsr_O_rw .+ reverse([0.0; 0.0 .+ cumsum(reverse(Δfsr_O_rw))])
+        fsr_O_rw = LinearInterpolation(t, fsr_rw_O_rw)
+        G_O_rw(τ) = (G0_O_rw[j] * fsr_O_rw(τ)) - G0_O_rw[j]
+
+        Δlogλ_O_rw = σλ_O_rw[j] .* vec(δ_mat_O_rw[j, :])
+        logλ_rw_O_rw = reverse([log(λ0_O_rw[j]); log(λ0_O_rw[j]) .+ cumsum(reverse(Δlogλ_O_rw))])
+        λlog_O_rw = LinearInterpolation(t, logλ_rw_O_rw)
+        λ_O_rw(τ) = exp(clamp(λlog_O_rw(τ), log(1e-2), log(30.0)))
+
+        Δlogw_O_rw = σw_O_rw[j] .* vec(δw_mat_O_rw[j, :])
+        logw_rw_O_rw = reverse([log(w0_O_rw[j]); log(w0_O_rw[j]) .+ cumsum(reverse(Δlogw_O_rw))])
+        wlog_O_rw = LinearInterpolation(t, logw_rw_O_rw)
+        w_O_rw(τ) = exp(clamp(wlog_O_rw(τ), log(1e-2), log(100.0)))
+
+        Δa_O_rw = σa_O_rw[j] .* vec(ϵ_mat_O_rw[j, :])
+        a0_O_rw = max(itp(λ0_O_rw[j], ALK_O_rw[j]), 1e-2)
+        a0_rw_O_rw = reverse([0.0; 0.0 .+ cumsum(reverse(Δa_O_rw))])
+        a_rw_O_rw = a0_O_rw .+ a0_rw_O_rw
+        a_itp_O_rw = LinearInterpolation(t, a_rw_O_rw)
+        a_O_rw(τ) = max(a_itp_O_rw(τ), 1)
+
+        u0_O_rw = [CF_O_rw[j], TF_O_rw[j]]
+        prob_draw_O_rw = remake(prob_O_rw, u0 = u0_O_rw, p = (w_O_rw, a_O_rw, λ_O_rw, η_O_rw[j], G_O_rw, O_O_rw))
+        sol_O_rw = try
+            solve(prob_draw_O_rw, Rodas5P(); saveat = t)
+        catch
+            nothing
+        end
+
+        if sol_O_rw !== nothing && sol_O_rw.retcode == SciMLBase.ReturnCode.Success && all(isfinite, Array(sol_O_rw))
+            k += 1
+            C_post_O_rw[:, k] = sol_O_rw[1, :]
+            T_post_O_rw[:, k] = sol_O_rw[2, :]
+        end
+    end
+
+    C_post_O_rw = C_post_O_rw[:, 1:k]
+    T_post_O_rw = T_post_O_rw[:, 1:k]
+
+    C_post_O_rw = reverse(C_post_O_rw; dims = 1)
+    T_post_O_rw = reverse(T_post_O_rw; dims = 1)
+
+    return (C_post_O_rw = C_post_O_rw, T_post_O_rw = T_post_O_rw)
+end
+
+
+
+#******* posterior reconstructions ******* 
+res_base = C_T_post!(chain1, t, prob_template, lo_vals, hi_vals, itp; draws = 4500)
+res_inc_u = C_T_post_inc_u!(chain2, t, prob_template, lo_vals, hi_vals, itp; draws = 4500)
+res_const_w = C_T_post_const_w!(chain3, t, prob_const_w, lo_vals, hi_vals, itp; draws = 4500)
+res_O_rw = C_T_post_O_rw!(chain4, t, prob_O_rw, lo_vals, hi_vals, itp; draws = 4500)
+
+
+#******* summaries from posterior matrices ******* 
+C_mean_base = mean(res_base.C_post; dims = 2)[:]
+C_lo_base = mapslices(q -> quantile(q, 0.025), res_base.C_post; dims = 2)[:]
+C_hi_base = mapslices(q -> quantile(q, 0.975), res_base.C_post; dims = 2)[:]
+
+T_mean_base = mean(res_base.T_post; dims = 2)[:]
+T_lo_base = mapslices(q -> quantile(q, 0.025), res_base.T_post; dims = 2)[:]
+T_hi_base = mapslices(q -> quantile(q, 0.975), res_base.T_post; dims = 2)[:]
+
+C_mean_inc_u = mean(res_inc_u.C_post_inc_u; dims = 2)[:]
+C_lo_inc_u = mapslices(q -> quantile(q, 0.025), res_inc_u.C_post_inc_u; dims = 2)[:]
+C_hi_inc_u = mapslices(q -> quantile(q, 0.975), res_inc_u.C_post_inc_u; dims = 2)[:]
+
+T_mean_inc_u = mean(res_inc_u.T_post_inc_u; dims = 2)[:]
+T_lo_inc_u = mapslices(q -> quantile(q, 0.025), res_inc_u.T_post_inc_u; dims = 2)[:]
+T_hi_inc_u = mapslices(q -> quantile(q, 0.975), res_inc_u.T_post_inc_u; dims = 2)[:]
+
+C_mean_const_w = mean(res_const_w.C_post_const_w; dims = 2)[:]
+C_lo_const_w = mapslices(q -> quantile(q, 0.025), res_const_w.C_post_const_w; dims = 2)[:]
+C_hi_const_w = mapslices(q -> quantile(q, 0.975), res_const_w.C_post_const_w; dims = 2)[:]
+
+T_mean_const_w = mean(res_const_w.T_post_const_w; dims = 2)[:]
+T_lo_const_w = mapslices(q -> quantile(q, 0.025), res_const_w.T_post_const_w; dims = 2)[:]
+T_hi_const_w = mapslices(q -> quantile(q, 0.975), res_const_w.T_post_const_w; dims = 2)[:]
+
+C_mean_O_rw = mean(res_O_rw.C_post_O_rw; dims = 2)[:]
+C_lo_O_rw = mapslices(q -> quantile(q, 0.025), res_O_rw.C_post_O_rw; dims = 2)[:]
+C_hi_O_rw = mapslices(q -> quantile(q, 0.975), res_O_rw.C_post_O_rw; dims = 2)[:]
+
+T_mean_O_rw = mean(res_O_rw.T_post_O_rw; dims = 2)[:]
+T_lo_O_rw = mapslices(q -> quantile(q, 0.025), res_O_rw.T_post_O_rw; dims = 2)[:]
+T_hi_O_rw = mapslices(q -> quantile(q, 0.975), res_O_rw.T_post_O_rw; dims = 2)[:]
+
+C_med_plot = reverse(C_med)
+C_sd_plot = reverse(C_sd)
+T_diff_plot = reverse(T_diff)
+yerr_T = fill(T_sd, length(t))
+
+
+#******* overlay plots ******* 
+pC = plot(; legend = true, xlabel = "Age (myr)", ylabel = "Doublings", title = "Atmospheric Carbon Dioxide Posterior")
+pT = plot(; legend = true, xlabel = "Age (myr)", ylabel = "GMST anomaly (K)", title = "GMST Anomaly Posterior" )
+
+plot!(pC, t, C_mean_base;
+      ribbon = (C_mean_base .- C_lo_base, C_hi_base .- C_mean_base),
+      fillalpha = 0.5,
+      color = :red3, linewidth = 5,
+      label = "Base case (95%)")
+
+plot!(pC, t, C_mean_inc_u;
+      ribbon = (C_mean_inc_u .- C_lo_inc_u, C_hi_inc_u .- C_mean_inc_u),
+      fillalpha = 0.3,
+      color = :dodgerblue, linewidth = 5,
+      label = "Increased uncertainties (95%)")
+
+plot!(pC, t, C_mean_const_w;
+      ribbon = (C_mean_const_w .- C_lo_const_w, C_hi_const_w .- C_mean_const_w),
+      fillalpha = 0.3,
+      color = :purple, linewidth = 5,
+      label = "Constant weathering sensitivity (95%)")
+
+plot!(pC, t, C_mean_O_rw;
+      ribbon = (C_mean_O_rw .- C_lo_O_rw, C_hi_O_rw .- C_mean_O_rw),
+      fillalpha = 0.3,
+      color = :darkorange, linewidth = 5,
+      label = "Other forcing random walk (95%)")
+
+scatter!(pC, t, C_med_plot;
+         yerror = 2 .* C_sd_plot,
+         color = :black, ms = 1, msw = 0.1,
+         label = false, lw = 0.5)
+
+plot!(pT, t, T_mean_base;
+      ribbon = (T_mean_base .- T_lo_base, T_hi_base .- T_mean_base),
+      fillalpha = 0.5,
+      color = :red3, linewidth = 5,
+      label = "Base case (95%)")
+
+plot!(pT, t, T_mean_inc_u;
+      ribbon = (T_mean_inc_u .- T_lo_inc_u, T_hi_inc_u .- T_mean_inc_u),
+      fillalpha = 0.3,
+      color = :dodgerblue, linewidth = 5,
+      label = "Increased uncertainties (95%)")
+
+plot!(pT, t, T_mean_const_w;
+      ribbon = (T_mean_const_w .- T_lo_const_w, T_hi_const_w .- T_mean_const_w),
+      fillalpha = 0.3,
+      color = :purple, linewidth = 5,
+      label = "Constant weathering sensitivity (95%)")
+
+plot!(pT, t, T_mean_O_rw;
+      ribbon = (T_mean_O_rw .- T_lo_O_rw, T_hi_O_rw .- T_mean_O_rw),
+      fillalpha = 0.3,
+      color = :darkorange, linewidth = 5,
+      label = "Other forcing random walk (95%)")
+
+scatter!(pT, t, T_diff_plot;
+         yerror = 2 .* yerr_T,
+         color = :black, ms = 1, msw = 0.1,
+         label = false, lw = 0.5)
+
+#panel labels
+(x1, x2) = xlims(pC); (y1, y2) = ylims(pC)
+dx = 0.02 * (x2 - x1); dy = 0.03 * (y2 - y1)
+annotate!(pC, x1 + dx, y2 - dy, text("A", 35, :bold))
+
+(x1, x2) = xlims(pT); (y1, y2) = ylims(pT)
+dx = 0.02 * (x2 - x1); dy = 0.03 * (y2 - y1)
+annotate!(pT, x1 + dx, y2 - dy, text("B", 35, :bold))
+
+p_combined_C_T = plot(pC, pT;
+         layout = (2, 1),
+         link = :x,
+         size = (1200, 1600),
+         margin = 0mm,
+         left_margin = 18mm, right_margin = 0mm,
+         bottom_margin = 5mm, top_margin = 6mm,
+         guide_padding = 0mm,
+         framestyle = :box)
+
+display(p_combined_C_T)
+
+#savefig(p_combined_C_T, joinpath(homedir(), "Desktop", "Cen_C_T_2_1_new.pdf"))
+
+#******* ESS posterior trajectories *******
+function ESS_post(chain, t; draws = 4500)
+    n = length(t)
+
+    λ0 = vec(Array(chain[:λ0]))
+    σλ = vec(Array(chain[:σλ]))
+    δ_mat = hcat([vec(Array(chain[Symbol("δ[$i]")])) for i in 1:n-1]...)
+
+    Ndraw = length(λ0)
+    nd = min(draws, Ndraw)
+
+    λ_post = Matrix{Float64}(undef, n, nd)
+
+    k = 0
+    for j in 1:nd
+        Δlogλ = σλ[j] .* vec(δ_mat[j, :])
+        logλ_rw = reverse([log(λ0[j]); log(λ0[j]) .+ cumsum(reverse(Δlogλ))])
+        λ_draw = exp.(clamp.(logλ_rw, log(1e-2), log(30.0)))
+
+        
+        k += 1
+        λ_post[:, k] = λ_draw
+    end
+
+    λ_post = λ_post[:, 1:k]
+    λ_post = reverse(λ_post; dims = 1)
+
+    return λ_post
+end
+
+#******* calculate ESS posteriors *******
+ESS_post_base = ESS_post(chain1, t; draws = 4500)
+ESS_post_inc_u = ESS_post(chain2, t; draws = 4500)
+ESS_post_const_w = ESS_post(chain3, t; draws = 4500)
+ESS_post_O_rw = ESS_post(chain4, t; draws = 4500)
+
+ESS_mean_base = mean(ESS_post_base; dims = 2)[:]
+ESS_lo_base = mapslices(q -> quantile(q, 0.025), ESS_post_base; dims = 2)[:]
+ESS_hi_base = mapslices(q -> quantile(q, 0.975), ESS_post_base; dims = 2)[:]
+
+ESS_mean_inc_u = mean(ESS_post_inc_u; dims = 2)[:]
+ESS_lo_inc_u = mapslices(q -> quantile(q, 0.025), ESS_post_inc_u; dims = 2)[:]
+ESS_hi_inc_u = mapslices(q -> quantile(q, 0.975), ESS_post_inc_u; dims = 2)[:]
+
+ESS_mean_const_w = mean(ESS_post_const_w; dims = 2)[:]
+ESS_lo_const_w = mapslices(q -> quantile(q, 0.025), ESS_post_const_w; dims = 2)[:]
+ESS_hi_const_w = mapslices(q -> quantile(q, 0.975), ESS_post_const_w; dims = 2)[:]
+
+ESS_mean_O_rw = mean(ESS_post_O_rw; dims = 2)[:]
+ESS_lo_O_rw = mapslices(q -> quantile(q, 0.025), ESS_post_O_rw; dims = 2)[:]
+ESS_hi_O_rw = mapslices(q -> quantile(q, 0.975), ESS_post_O_rw; dims = 2)[:]
+
+pESS = plot(; legend = true, xlabel = "Age (myr)", ylabel = "K/Doublings", title = "Earth System Sensitivity Posterior")
+
+plot!(pESS, t, ESS_mean_base;
+      ribbon = (ESS_mean_base .- ESS_lo_base, ESS_hi_base .- ESS_mean_base),
+      fillalpha = 0.5,
+      color = :red3, linewidth = 5,
+      label = "Base case (95%)")
+
+plot!(pESS, t, ESS_mean_inc_u;
+      ribbon = (ESS_mean_inc_u .- ESS_lo_inc_u, ESS_hi_inc_u .- ESS_mean_inc_u),
+      fillalpha = 0.3,
+      color = :dodgerblue, linewidth = 5,
+      label = "Increased uncertainties (95%)")
+
+plot!(pESS, t, ESS_mean_const_w;
+      ribbon = (ESS_mean_const_w .- ESS_lo_const_w, ESS_hi_const_w .- ESS_mean_const_w),
+      fillalpha = 0.3,
+      color = :purple, linewidth = 5,
+      label = "Constant weathering sensitivity (95%)")
+
+plot!(pESS, t, ESS_mean_O_rw;
+      ribbon = (ESS_mean_O_rw .- ESS_lo_O_rw, ESS_hi_O_rw .- ESS_mean_O_rw),
+      fillalpha = 0.3,
+      color = :darkorange, linewidth = 5,
+      label = "Other forcing random walk (95%)")
+
+#display(pESS)
+#savefig(pESS, joinpath(homedir(), "Desktop", "Cen_ESS_new.pdf"))
+
+#******* Other Forcing as a random walk posteriors ******* 
+
+function O_post(chain, t; draws = 4500)
+    n = length(t)
+
+    m = 9 / 420
+    SI_dbl = m / 3.7
+    SI_0 = -SI_dbl * 60
+    O_det = SI_0 .+ SI_dbl .* t
+
+    Ofsr = vec(Array(chain[:Ofsr]))
+    Oζ_mat = hcat([vec(Array(chain[Symbol("Oζ[$i]")])) for i in 1:n-1]...)
+
+    Ndraw = length(Ofsr)
+    nd = min(draws, Ndraw)
+
+    O_post_mat = Matrix{Float64}(undef, n, nd)
+
+    k = 0
+    for j in 1:nd
+        ΔO = Ofsr[j] .* vec(Oζ_mat[j, :])
+        O_rw = reverse([0.0; cumsum(reverse(ΔO))])
+
+        k += 1
+        O_post_mat[:, k] = O_rw
+    end
+
+    O_post_mat = O_post_mat[:, 1:k] .- O_det
+    O_post_mat = reverse(O_post_mat; dims = 1)
+
+    return O_post_mat
+end
+
+O_post_mat = O_post(chain4, t; draws = 4500)
+
+O_mean = mean(O_post_mat; dims = 2)[:]
+O_lo = mapslices(q -> quantile(q, 0.025), O_post_mat; dims = 2)[:]
+O_hi = mapslices(q -> quantile(q, 0.975), O_post_mat; dims = 2)[:]
+
+pO = plot(
+    t, O_mean;
+    xlabel = "Age (Myr)",
+    ylabel = "Doublings",
+    title = "Other Forcing Posterior",
+    color = :darkorange,
+    legend = :topleft,
+    label = "Other forcing random walk (95%)",
+    lw = 5,
+    grid = true,
+    framestyle = :box,
+    size = (1400, 800),
+    margin = 0mm,
+    left_margin = 8mm, right_margin = 6mm,
+    bottom_margin = 8mm, top_margin = 6mm,
+    guide_padding = 4mm
+)
+
+plot!(pO, t, O_mean;
+      ribbon = (O_mean .- O_lo, O_hi .- O_mean),
+      fillalpha = 0.3, color = :darkorange, label = false)
+
+(x1, x2) = xlims(pESS); (y1, y2) = ylims(pESS)
+dx = 0.02 * (x2 - x1); dy = 0.03 * (y2 - y1)
+annotate!(pESS, x1 + dx, y2 - dy, text("A", 35, :bold))
+
+(x1, x2) = xlims(pO); (y1, y2) = ylims(pO)
+dx = 0.02 * (x2 - x1); dy = 0.03 * (y2 - y1)
+annotate!(pO, x1 + dx, y2 - dy, text("B", 35, :bold))
+
+
+p_combined_ESS_O = plot(pESS, pO;
+         layout = (2, 1),
+         link = :x,
+         size = (1200, 1600),
+         margin = 0mm,
+         left_margin = 18mm, right_margin = 0mm,
+         bottom_margin = 8mm, top_margin = 6mm,
+         guide_padding = 0mm,
+         framestyle = :box)
+
+display(p_combined_ESS_O)
+
+
+#******* w posterior trajectories *******
+function w_post(chain, t; draws = 4500)
+    n = length(t)
+
+    w0 = vec(Array(chain[:w0]))
+    σw = vec(Array(chain[:σw]))
+    δw_mat = hcat([vec(Array(chain[Symbol("δw[$i]")])) for i in 1:n-1]...)
+
+    Ndraw = length(w0)
+    nd = min(draws, Ndraw)
+
+    w_post_mat = Matrix{Float64}(undef, n, nd)
+
+    k = 0
+    for j in 1:nd
+        Δlogw = σw[j] .* vec(δw_mat[j, :])
+        logw_rw = reverse([log(w0[j]); log(w0[j]) .+ cumsum(reverse(Δlogw))])
+        w_draw = exp.(clamp.(logw_rw, log(1e-2), log(100.0)))
+
+        k += 1
+        w_post_mat[:, k] = w_draw
+    end
+
+    w_post_mat = w_post_mat[:, 1:k]
+    w_post_mat = reverse(w_post_mat; dims = 1)
+    
+    frac_increasing = mean(w_post_mat[1, :] .> w_post_mat[end, :])
+
+    return w_post_mat, frac_increasing
+end
+
+n = length(t)
+
+w0_draws = vec(Array(chain3[:w0]))
+samples  = length(w0_draws)
+
+w_post_const = repeat(reshape(w0_draws, 1, :), n, 1)
+
+w_post_base, frac_base = w_post(chain1, t; draws = 4500)
+w_post_inc_u, frac_inc_u = w_post(chain2, t; draws = 4500)
+w_post_O_rw, frac_O_rw = w_post(chain4, t; draws = 4500)
+
+println("base: ", frac_base)
+println("inc_u: ", frac_inc_u)
+println("O_rw: ", frac_O_rw)
+
+w_mean_base = mean(w_post_base; dims = 2)[:]
+w_lo_base = mapslices(q -> quantile(q, 0.025), w_post_base; dims = 2)[:]
+w_hi_base = mapslices(q -> quantile(q, 0.975), w_post_base; dims = 2)[:]
+
+w_mean_inc_u = mean(w_post_inc_u; dims = 2)[:]
+w_lo_inc_u = mapslices(q -> quantile(q, 0.025), w_post_inc_u; dims = 2)[:]
+w_hi_inc_u = mapslices(q -> quantile(q, 0.975), w_post_inc_u; dims = 2)[:]
+
+w_mean_const = mean(w_post_const; dims = 2)[:]
+w_lo_const = mapslices(q -> quantile(q, 0.025), w_post_const; dims = 2)[:]
+w_hi_const = mapslices(q -> quantile(q, 0.975), w_post_const; dims = 2)[:]
+
+w_mean_O_rw = mean(w_post_O_rw; dims = 2)[:]
+w_lo_O_rw = mapslices(q -> quantile(q, 0.025), w_post_O_rw; dims = 2)[:]
+w_hi_O_rw = mapslices(q -> quantile(q, 0.975), w_post_O_rw; dims = 2)[:]
+
+
+#pwT = plot(; legend = true, xlabel = "Age (myr)", ylabel = "Earth system sensitivity K/dbl")
+pwT = plot(
+    t, w_mean_base;
+    xlabel = "Age (myr)",
+    ylabel = "Tmol C per yr K",
+    title = "Weathering Sensitivity Posterior",
+    color = :red3,
+    legend = :topleft,
+    label = false,
+    lw = 5,
+    grid = true,
+    framestyle = :box,
+    size = (1400, 800),
+    margin = 0mm,
+    left_margin = 8mm, right_margin = 6mm,
+    bottom_margin = 8mm, top_margin = 6mm,
+    guide_padding = 4mm
+)
+
+
+plot!(pwT, t, w_mean_base;
+      ribbon = (w_mean_base .- w_lo_base, w_hi_base .- w_mean_base),
+      fillalpha = 0.5,
+      color = :red3, linewidth = 5,
+      label = "Base case (95%)")
+
+plot!(pwT, t, w_mean_inc_u;
+      ribbon = (w_mean_inc_u .- w_lo_inc_u, w_hi_inc_u .- w_mean_inc_u),
+      fillalpha = 0.3,
+      color = :dodgerblue, linewidth = 5,
+      label = "Increased uncertainties (95%)")
+
+plot!(pwT, t, w_mean_const;
+      ribbon = (w_mean_const .- w_lo_const, w_hi_const .- w_mean_const),
+      fillalpha = 0.3,
+      color = :purple, linewidth = 5,
+      label = "Constant weathering sensitivity (95%)")
+
+plot!(pwT, t, w_mean_O_rw;
+      ribbon = (w_mean_O_rw .- w_lo_O_rw, w_hi_O_rw .- w_mean_O_rw),
+      fillalpha = 0.3,
+      color = :darkorange, linewidth = 5,
+      label = "Other forcing random walk (95%)")
+
+#display(pwT)
+
+
+function w_post(chain, t; draws = 4500)
+    n = length(t)
+
+    w0 = vec(Array(chain[:w0]))
+    σw = vec(Array(chain[:σw]))
+    δw_mat = hcat([vec(Array(chain[Symbol("δw[$i]")])) for i in 1:n-1]...)
+
+    Ndraw = length(w0)
+    nd = min(draws, Ndraw)
+
+    w_post_mat = Matrix{Float64}(undef, n, nd)
+
+    k = 0
+    for j in 1:nd
+        Δlogw = σw[j] .* vec(δw_mat[j, :])
+        logw_rw = reverse([log(w0[j]); log(w0[j]) .+ cumsum(reverse(Δlogw))])
+        w_draw = exp.(clamp.(logw_rw, log(1e-2), log(100.0)))
+
+        k += 1
+        w_post_mat[:, k] = w_draw
+    end
+
+    w_post_mat = w_post_mat[:, 1:k]
+    w_post_mat = reverse(w_post_mat; dims = 1)
+
+    return w_post_mat
+end
+
+
+#******* feedback plot ******* 
+function model_feedback_post(chain, t;
+    target = 660.0 / 1e2,
+    tol = 10.0 / 1e2,
+    eocene_age = 5.0,
+    pCO2_grid = range(280.0, 2000.0; length = 300)
+)
+    n = length(t)
+
+    #rescaled for Tmol
+    G0_draws = vec(Array(chain[:G0])) ./ 1e2
+    w0_draws = vec(Array(chain[:w0])) ./ 1e2
+    σw_draws = vec(Array(chain[:σw]))
+
+    λ0_draws = vec(Array(chain[:λ0]))
+    σλ_draws = vec(Array(chain[:σλ]))
+
+    δw_vecs = [vec(Array(chain[Symbol("δw[$i]")])) for i in 1:(n-1)]
+    δw_post = hcat(δw_vecs...)'
+
+    δλ_vecs = [vec(Array(chain[Symbol("δ[$i]")])) for i in 1:(n-1)]
+    δλ_post = hcat(δλ_vecs...)'
+
+    idx = findall(abs.(G0_draws .- target) .<= tol)
+
+    G0_draws = G0_draws[idx]
+    w0_draws = w0_draws[idx]
+    σw_draws = σw_draws[idx]
+    δw_post  = δw_post[:, idx]
+
+    λ0_draws = λ0_draws[idx]
+    σλ_draws = σλ_draws[idx]
+    δλ_post  = δλ_post[:, idx]
+
+    S = length(idx)
+
+    Δlogw_draws = δw_post .* reshape(σw_draws, 1, :)
+    Δlogλ_draws = δλ_post .* reshape(σλ_draws, 1, :)
+
+    logw_paths = Array{Float64}(undef, n, S)
+    logλ_paths = Array{Float64}(undef, n, S)
+
+    #modern where w0, λ0 values were saved as modern values in the model output
+    for j in 1:S
+        logw0 = log(w0_draws[j])
+        logλ0 = log(λ0_draws[j])
+
+        logw_paths[:, j] = reverse([logw0; logw0 .+ cumsum(reverse(Δlogw_draws[:, j]))])
+        logλ_paths[:, j] = reverse([logλ0; logλ0 .+ cumsum(reverse(Δlogλ_draws[:, j]))])
+    end
+
+    #w and λ at 55 myr ago
+    #reminder that the model is formualted backwards
+    #hence t = 5 is 55 myr ago
+    w_5 = similar(w0_draws, S)
+    λ_5 = similar(λ0_draws, S)
+
+    for j in 1:S
+        wlog_itp = LinearInterpolation(t, logw_paths[:, j])
+        λlog_itp = LinearInterpolation(t, logλ_paths[:, j])
+
+        logw5 = clamp(wlog_itp(eocene_age), log(1e-2), log(100.0))
+        logλ5 = clamp(λlog_itp(eocene_age), log(1e-2), log(30.0))
+
+        w_5[j] = exp(logw5)
+        λ_5[j] = exp(logλ5)
+    end
+
+    #CO2 grid
+    r_row = reshape(pCO2_grid ./ 280.0, 1, :)
+    log2_row = log2.(r_row)
+
+    G0_col = reshape(G0_draws, S, 1)
+    mol_dbl0_col = reshape(w0_draws .* λ0_draws, S, 1)
+    mol_dbl5_col = reshape(w_5 .* λ_5, S, 1)
+
+    #rows = draws, cols = CO2 grid
+    Fw0 = mol_dbl0_col .* log2_row .+ G0_col   #Modern
+    Fw5 = mol_dbl5_col .* log2_row .+ G0_col   #Early Eocene
+
+    return Fw0, Fw5, pCO2_grid
+end
+
+#seperate calculation for constant w 
+target = 660.0 / 1e2
+tol = 10.0 / 1e2
+
+pCO2_grid = range(280.0, 2000.0; length = 300)
+
+n = length(t)
+
+#rescaled for Tmol
+G0_draws = vec(Array(chain3[:G0])) ./ 1e2
+w0_draws = vec(Array(chain3[:w0])) ./ 1e2
+
+λ0_draws = vec(Array(chain3[:λ0]))
+σλ_draws = vec(Array(chain3[:σλ]))
+
+idx = findall(abs.(G0_draws .- target) .<= tol)
+
+G0_draws = G0_draws[idx]
+w0_draws = w0_draws[idx]
+
+λ0_draws = λ0_draws[idx]
+
+S = length(idx)
+
+#CO2 grid
+r_row = reshape(pCO2_grid ./ 280.0, 1, :)
+log2_row = log2.(r_row)
+
+G0_col = reshape(G0_draws, S, 1)
+mol_dbl0_col = reshape(w0_draws .* λ0_draws, S, 1)
+
+#rows = draws, cols = CO2 grid
+feedback_post_const_w = mol_dbl0_col .* log2_row .+ G0_col
+
+
+#******* model feedback posteriors *******
+feedback_post_base_0, feedback_post_base_5, pCO2_grid = model_feedback_post(chain1, t)
+feedback_post_inc_u_0, feedback_post_inc_u_5, _ = model_feedback_post(chain2, t)
+feedback_post_O_rw_0, feedback_post_O_rw_5, _ = model_feedback_post(chain4, t)
+
+#modern
+feedback_mean0_base = mean(feedback_post_base_0; dims = 1)[:]
+feedback_lo0_base = mapslices(q -> quantile(q, 0.025), feedback_post_base_0; dims = 1)[:]
+feedback_hi0_base = mapslices(q -> quantile(q, 0.975), feedback_post_base_0; dims = 1)[:]
+
+feedback_mean0_inc_u = mean(feedback_post_inc_u_0; dims = 1)[:]
+feedback_lo0_inc_u = mapslices(q -> quantile(q, 0.025), feedback_post_inc_u_0; dims = 1)[:]
+feedback_hi0_inc_u = mapslices(q -> quantile(q, 0.975), feedback_post_inc_u_0; dims = 1)[:]
+
+feedback_mean_const_w = mean(feedback_post_const_w; dims = 1)[:]
+feedback_lo_const_w = mapslices(q -> quantile(q, 0.025), feedback_post_const_w; dims = 1)[:]
+feedback_hi_const_w = mapslices(q -> quantile(q, 0.975), feedback_post_const_w; dims = 1)[:]
+
+feedback_mean0_O_rw = mean(feedback_post_O_rw_0; dims = 1)[:]
+feedback_lo0_O_rw = mapslices(q -> quantile(q, 0.025), feedback_post_O_rw_0; dims = 1)[:]
+feedback_hi0_O_rw = mapslices(q -> quantile(q, 0.975), feedback_post_O_rw_0; dims = 1)[:]
+
+#Eocene
+feedback_mean5_base = mean(feedback_post_base_5; dims = 1)[:]
+feedback_lo5_base = mapslices(q -> quantile(q, 0.025), feedback_post_base_5; dims = 1)[:]
+feedback_hi5_base = mapslices(q -> quantile(q, 0.975), feedback_post_base_5; dims = 1)[:]
+
+feedback_mean5_inc_u = mean(feedback_post_inc_u_5; dims = 1)[:]
+feedback_lo5_inc_u = mapslices(q -> quantile(q, 0.025), feedback_post_inc_u_5; dims = 1)[:]
+feedback_hi5_inc_u = mapslices(q -> quantile(q, 0.975), feedback_post_inc_u_5; dims = 1)[:]
+
+feedback_mean5_O_rw = mean(feedback_post_O_rw_5; dims = 1)[:]
+feedback_lo5_O_rw = mapslices(q -> quantile(q, 0.025), feedback_post_O_rw_5; dims = 1)[:]
+feedback_hi5_O_rw = mapslices(q -> quantile(q, 0.975), feedback_post_O_rw_5; dims = 1)[:]
+
+pFw = plot(
+    pCO2_grid, feedback_mean0_base;
+    xlabel = "Atmospheric carbon dioxide [ppm]",
+    ylabel = "Tmol C per yr",
+    title = "Net Feedback",
+    color = :red3,
+    legend = :topleft,
+    label = false,
+    lw = 5,
+    grid = true,
+    framestyle = :box,
+    size = (1400, 800),
+    margin = 0mm,
+    left_margin = 8mm, right_margin = 6mm,
+    bottom_margin = 8mm, top_margin = 6mm,
+    guide_padding = 4mm
+)
+
+#modern curves
+plot!(pFw, pCO2_grid, feedback_mean0_base;
+      ribbon = (feedback_mean0_base .- feedback_lo0_base, feedback_hi0_base .- feedback_mean0_base),
+      fillalpha = 0.5,
+      color = :red3, linewidth = 5, linestyle = :solid,
+      label = "Base case modern (95%)")
+
+plot!(pFw, pCO2_grid, feedback_mean0_inc_u;
+      ribbon = (feedback_mean0_inc_u .- feedback_lo0_inc_u, feedback_hi0_inc_u .- feedback_mean0_inc_u),
+      fillalpha = 0.1,
+      color = :dodgerblue, linewidth = 5, linestyle = :solid,
+      label = "Increased uncertainties modern (95%)")
+
+plot!(pFw, pCO2_grid, feedback_mean_const_w;
+      ribbon = (feedback_mean_const_w .- feedback_lo_const_w, feedback_hi_const_w .- feedback_mean_const_w),
+      fillalpha = 0.1,
+      color = :purple, linewidth = 5, linestyle = :solid,
+      label = "constant weathering sensitivity (95%)")
+
+plot!(pFw, pCO2_grid, feedback_mean0_O_rw;
+      ribbon = (feedback_mean0_O_rw .- feedback_lo0_O_rw, feedback_hi0_O_rw .- feedback_mean0_O_rw),
+      fillalpha = 0.1,
+      color = :darkorange, linewidth = 5, linestyle = :solid,
+      label = "Other forcing random walk modern (95%)")
+
+#Eocene curves
+plot!(pFw, pCO2_grid, feedback_mean5_base;
+      ribbon = (feedback_mean5_base .- feedback_lo5_base, feedback_hi5_base .- feedback_mean5_base),
+      fillalpha = 0.3, linestyle = :dash,
+      color = :red3, linewidth = 5,
+      label = "Base case Eocene (95%)")
+
+plot!(pFw, pCO2_grid, feedback_mean5_inc_u;
+      ribbon = (feedback_mean5_inc_u .- feedback_lo5_inc_u, feedback_hi5_inc_u .- feedback_mean5_inc_u),
+      fillalpha = 0.05, linestyle = :dash,
+      color = :dodgerblue, linewidth = 5,
+      label = "Increased uncertainties Eocene (95%)")
+
+plot!(pFw, pCO2_grid, feedback_mean5_O_rw;
+      ribbon = (feedback_mean5_O_rw .- feedback_lo5_O_rw, feedback_hi5_O_rw .- feedback_mean5_O_rw),
+      fillalpha = 0.05, linestyle = :dash,
+      color = :darkorange, linewidth = 5,
+      label = "Other forcing random walk Eocene (95%)")
+
+display(pFw)
+
+
+G0 = 6.6
+#r = pCO2/ pCO2_0 written as R in Berner models and elsewhere
+r = pCO2_grid ./ 280.0
+
+#Walker et al. (1981)
+#note that the ESS formulation used here is from Walker et al. (1981)
+w_81 = G0 .* (r.^0.3) .* exp.((4.6 .* r.^0.364 .- 4.6) ./ 13.7)
+
+#Uchikawa & Zeebe (2008) n = 0.2
+UZ2 = G0 .* r.^0.2
+#UZ4 = quantile_band(G0_col .* r.^0.4)
+#Uchikawa & Zeebe (2008) n = 0.6
+UZ6 = G0 .* r.^0.6
+
+#Caves et al. (2016) modern
+#note that Caves Eocene values were not plotted as that feedback formulation does not go through the origin
+CM = G0 .* (log2.(r) .+ 1)
+
+#Walker & Kasting (1992)
+CE = G0 .* r.^0.3
+
+#Krissansen-Totton & Catling (2017)
+KT17 = vec(6.6 .* (((r)'.^0.33) .* exp.((log2.(r)'.*5.6) ./ 34)))
+KT17_MM = vec(6.6 .* (((2 .* (r)') ./ (1 .+ (r)')).^0.41) .* exp.((log2.(pCO2_grid ./ 280.0)'.*5.6) ./ 31))
+
+#Herbert et al. (2022)
+#note this is rescaled (Herbert et al. 2022 use Fwsil0 = 5 Tmol/yr
+Ea = 4
+EarthSen = 6.5
+#Ea = ActE # activation energy of silicate dissolution
+ESS = EarthSen # deltaT per doubling pCO2
+temp1 = 1000 .* (Ea .* 4.184) ./ (8.314 .* 288 .* 288) # gas constant 8.314 J/(mol/K), modern average temperatue 288K
+temp2 = ESS ./ log(2)
+wf = exp.(temp1 .* log.(pCO2_grid ./ 280.0) .* temp2)#; # weathering feedback
+
+H22 = vec(6.6 .* wf)
+
+#Upper limit Ea for the base case
+Ea5_5 = 5.5
+EarthSen = 6.5
+
+#Ea = ActE # activation energy of silicate dissolution
+ESS = EarthSen # deltaT per doubling pCO2
+temp1_5_5 = 1000 .* (Ea5_5 .* 4.184) ./ (8.314 .* 288 .* 288) # gas constant 8.314 J/(mol7K), modern average temperatue 288K
+temp2_5_5 = ESS ./ log(2)
+#wf = exp(temp1*log(x(3)/55e15)* temp2); # weathering feedback
+wf_5_5 = exp.(temp1_5_5 .* log.(pCO2_grid ./ 280.0) .* temp2_5_5)#; # weathering feedback
+
+w_Ea_5_5 = vec(6.6 .* wf_5_5)
+
+#GEOCARB
+G, Z = 3.3, 0.09
+Q = G * Z
+GEOCARB = G0 .* (r.^Q) .* (1 .+ Q .* log.(r .* (2 .* r ./ (1 .+ r)).^0.4))
+
+
+#Walker et al. (1981)
+plot!(pFw, pCO2_grid, w_81;
+      fillalpha=0.0, color=:steelblue4, lw=2, linestyle=:dashdot,
+      label="Walker et al. 1981")
+
+#Krissansen-Totton & Catling (2017) nominal model
+plot!(pFw, pCO2_grid, KT17;
+      color=:gold1, linestyle=:dashdot, lw=2,
+      label="Krissansen-Totton & Catling 2017 (nominal)")
+
+#Krissansen-Totton & Catling (2017) Michaelis–Menten law
+plot!(pFw, pCO2_grid, KT17_MM;
+      color=:gold1, linestyle=:dot, lw=2,
+      label="KT17 Michaelis Menten")
+
+#Herbert et al. (2022)
+plot!(pFw, pCO2_grid, H22;
+      color=:magenta1, linestyle=:dashdot, lw=2, 
+      label="Herbert et al. 2022")
+
+#Ea = 5.5
+plot!(pFw, pCO2_grid, w_Ea_5_5;
+      color=:orangered4, linestyle=:solid, lw=2,
+      label="Ea = 5.5")
+
+#Uchikawa & Zeebe (2008) default feedback
+plot!(pFw, pCO2_grid, UZ2;
+      fillalpha=0.0, color=:black, linestyle=:dashdot, lw=2,
+      label="Uchikawa & Zeebe 2008 (default)")
+
+#Uchikawa & Zeebe (2008) strong feedback
+plot!(pFw, pCO2_grid, UZ6;
+      fillalpha=0.0, color=:black, linestyle=:dashdot, lw=2,
+      label="Uchikawa & Zeebe 2008 (strong)")
+
+#Caves et al. (2016) modern
+plot!(pFw, pCO2_grid, CM;
+      fillalpha=0.0, color=:darkseagreen, lw=2, linestyle=:dashdot,
+      label="Caves et al. 2016 (modern)")
+
+#Walker & Kasting (1992)
+plot!(pFw, pCO2_grid, CE;
+      fillalpha=0.0, color=:darkgreen, lw=2, linestyle=:dashdot,
+      label="Walker & Kasting 1992")
+
+#GEOCARB
+plot!(pFw, pCO2_grid, GEOCARB;
+      fillalpha=0.0, color=:rosybrown4, lw=2, linestyle=:dashdot,
+      label="GEOCARB")
+
+ylims!(pFw, (6.6, 15.0))
+#display(pFw)
+
+(x1, x2) = xlims(pwT); (y1, y2) = ylims(pwT)
+annotate!(pwT, x1 + 0.02*(x2-x1), y2 - 0.03*(y2-y1), text("A", 35, :bold))
+
+(x1, x2) = xlims(pFw); (y1, y2) = ylims(pFw)
+annotate!(pFw, x1 + 0.02*(x2-x1), y2 - 0.03*(y2-y1), text("B", 35, :bold))
+
+p_combined_feedback_w = plot(pwT, pFw;
+    layout = (2, 1),
+    size   = (1200, 1600),
+    margin = 0mm,
+    left_margin   = 13mm, right_margin  = 10mm,
+    bottom_margin = 5mm,  top_margin    = 6mm,
+    guide_padding = 0mm,
+    framestyle = :box
+)
+
+
+display(p_combined_feedback_w)
+
+#******* G = G0 x fsr posteriors *******
+function G_post(chain, t, lo_vals, hi_vals; draws = 4500)
+    n = length(t)
+
+    σfsr = vec(Array(chain[:σfsr]))
+    ζ_draws = [vec(Array(chain[Symbol("ζ[$i]")])) for i in 1:(n-1)]
+    samples = length(σfsr)
+
+    nd = isnothing(draws) ? samples : min(draws, samples)
+
+    σfsr = σfsr[1:nd]
+
+    Δfsr = hcat(ζ_draws...) .* reshape(vec(Array(chain[:σfsr])), :, 1)
+    Δfsr = Δfsr[1:nd, :]
+
+    m_fsr = (lo_vals .+ hi_vals) ./ 2
+
+    fsr_post = Matrix{Float64}(undef, n, nd)
+    for j in 1:nd
+        Δ = Δfsr[j, :]
+        fsr_post[:, j] = m_fsr .+ reverse([0.0; cumsum(reverse(Δ))])
+    end
+
+    G0_draws = vec(Array(chain[:G0])) ./ 100
+    G0_draws = G0_draws[1:nd]
+
+    G_post = reverse(fsr_post .* reshape(G0_draws, 1, :).- reshape(G0_draws, 1, :))
+
+    G0_post = reverse(G0_draws)
+    return G_post, G0_post
+end
+
+G_post_base, G0_post_base = G_post(chain1, t, lo_vals, hi_vals; draws = 4500)
+G_post_inc_u, _ = G_post(chain2, t, lo_vals, hi_vals; draws = 4500)
+G_post_const_w, _ = G_post(chain3, t, lo_vals, hi_vals; draws = 4500)
+G_post_O_rw, _ = G_post(chain4, t, lo_vals, hi_vals; draws = 4500)
+
+G_mean_base = mean(G_post_base; dims = 2)[:]
+G_lo_base = mapslices(q -> quantile(q, 0.025), G_post_base; dims = 2)[:]
+G_hi_base = mapslices(q -> quantile(q, 0.975), G_post_base; dims = 2)[:]
+
+G0_post_mean_base = mean(G0_post_base)
+G0_post_lo_base = quantile(G0_post_base, 0.025)
+G0_post_hi_base = quantile(G0_post_base, 0.975)
+
+G0_lo_vals = reverse(lo_vals .* G0_post_lo_base .- G0_post_lo_base)
+G0_hi_vals = reverse(hi_vals .* G0_post_hi_base .- G0_post_hi_base)
+G0_mean_vals = reverse(((hi_vals .+ lo_vals)./2 .* G0_post_mean_base) .- G0_post_mean_base)
+
+G_mean_inc_u = mean(G_post_inc_u; dims = 2)[:]
+G_lo_inc_u = mapslices(q -> quantile(q, 0.025), G_post_inc_u; dims = 2)[:]
+G_hi_inc_u = mapslices(q -> quantile(q, 0.975), G_post_inc_u; dims = 2)[:]
+
+G_mean_const_w = mean(G_post_const_w; dims = 2)[:]
+G_lo_const_w = mapslices(q -> quantile(q, 0.025), G_post_const_w; dims = 2)[:]
+G_hi_const_w = mapslices(q -> quantile(q, 0.975), G_post_const_w; dims = 2)[:]
+
+G_mean_O_rw = mean(G_post_O_rw; dims = 2)[:]
+G_lo_O_rw = mapslices(q -> quantile(q, 0.025), G_post_O_rw; dims = 2)[:]
+G_hi_O_rw = mapslices(q -> quantile(q, 0.975), G_post_O_rw; dims = 2)[:]
+
+
+
+pG = plot(; legend = :topleft, xlabel = "Age (myr)", ylabel = "Tmol C per yr",
+    color = :red3,
+    title = "Change in Volcanic Degassing Posterior",
+    label = false,
+    lw = 5,
+    grid = true,
+    framestyle = :box,
+    size = (1200, 800),
+    margin = 0mm,
+    left_margin = 8mm, right_margin = 6mm,
+    bottom_margin = 8mm, top_margin = 6mm,
+    guide_padding = 4mm
+)
+
+plot!(pG, t, G_mean_base;
+      ribbon = (G_mean_base .- G_lo_base, G_hi_base .- G_mean_base),
+      fillalpha = 0.5,
+      color = :red3, linewidth = 5,
+      label = "Base case (95%)")
+
+plot!(pG, t, G_mean_inc_u;
+      ribbon = (G_mean_inc_u .- G_lo_inc_u, G_hi_inc_u .- G_mean_inc_u),
+      fillalpha = 0.2,
+      color = :dodgerblue, linewidth = 5,
+      label = "Increased uncertainties (95%)")
+
+plot!(pG, t, G_mean_const_w;
+      ribbon = (G_mean_const_w .- G_lo_const_w, G_hi_const_w .- G_mean_const_w),
+      fillalpha = 0.2,
+      color = :purple, linewidth = 5,
+      label = "Constant weathering sensitivity (95%)")
+
+plot!(pG, t, G_mean_O_rw;
+      ribbon = (G_mean_O_rw .- G_lo_O_rw, G_hi_O_rw .- G_mean_O_rw),
+      fillalpha = 0.2,
+      color = :darkorange, linewidth = 5,
+      label = "Other forcing random walk (95%)")
+
+plot!(pG, t, G0_lo_vals;
+      color = :black, linewidth = 5,
+      label = "prior bounds")
+
+plot!(pG, t, G0_hi_vals;
+      color = :black, linewidth = 5,
+      label = false)
+
+plot!(pG, t, G0_mean_vals;
+      color = :black, linewidth = 5,
+      label = false)
+
+#display(p_combined_C_T)
+#display(p_combined_ESS_O)
+#display(p_combined_feedback_w)
+#display(pG)
+#******* saving final figures *******
+
+savefig(p_combined_C_T, joinpath(homedir(), "Downloads", "RK_C_T_final.pdf"))
+savefig(p_combined_ESS_O, joinpath(homedir(), "Downloads", "RK_ESS_final.pdf"))
+savefig(p_combined_feedback_w, joinpath(homedir(), "Downloads", "RK_feedback_final.pdf"))
+savefig(pG, joinpath(homedir(), "Downloads", "RK_degassing_final.pdf"))
