@@ -592,44 +592,44 @@ res_inc_fsr = C_T_post_inc_fsr!(chain5, t, prob_template, lo_vals_inc_fsr, hi_va
 
 #******* summaries from posterior matrices ******* 
 C_mean_base = mean(res_base.C_post; dims = 2)[:]
-C_lo_base = mapslices(q -> quantile(q, 0.17), res_base.C_post; dims = 2)[:]
-C_hi_base = mapslices(q -> quantile(q, 0.83), res_base.C_post; dims = 2)[:]
+C_lo_base = mapslices(q -> quantile(q, 0.025), res_base.C_post; dims = 2)[:]
+C_hi_base = mapslices(q -> quantile(q, 0.975), res_base.C_post; dims = 2)[:]
 
 T_mean_base = mean(res_base.T_post; dims = 2)[:]
-T_lo_base = mapslices(q -> quantile(q, 0.17), res_base.T_post; dims = 2)[:]
-T_hi_base = mapslices(q -> quantile(q, 0.83), res_base.T_post; dims = 2)[:]
+T_lo_base = mapslices(q -> quantile(q, 0.025), res_base.T_post; dims = 2)[:]
+T_hi_base = mapslices(q -> quantile(q, 0.975), res_base.T_post; dims = 2)[:]
 
 C_mean_inc_u = mean(res_inc_u.C_post_inc_u; dims = 2)[:]
-C_lo_inc_u = mapslices(q -> quantile(q, 0.17), res_inc_u.C_post_inc_u; dims = 2)[:]
-C_hi_inc_u = mapslices(q -> quantile(q, 0.83), res_inc_u.C_post_inc_u; dims = 2)[:]
+C_lo_inc_u = mapslices(q -> quantile(q, 0.025), res_inc_u.C_post_inc_u; dims = 2)[:]
+C_hi_inc_u = mapslices(q -> quantile(q, 0.975), res_inc_u.C_post_inc_u; dims = 2)[:]
 
 T_mean_inc_u = mean(res_inc_u.T_post_inc_u; dims = 2)[:]
-T_lo_inc_u = mapslices(q -> quantile(q, 0.17), res_inc_u.T_post_inc_u; dims = 2)[:]
-T_hi_inc_u = mapslices(q -> quantile(q, 0.83), res_inc_u.T_post_inc_u; dims = 2)[:]
+T_lo_inc_u = mapslices(q -> quantile(q, 0.025), res_inc_u.T_post_inc_u; dims = 2)[:]
+T_hi_inc_u = mapslices(q -> quantile(q, 0.975), res_inc_u.T_post_inc_u; dims = 2)[:]
 
 C_mean_const_w = mean(res_const_w.C_post_const_w; dims = 2)[:]
-C_lo_const_w = mapslices(q -> quantile(q, 0.17), res_const_w.C_post_const_w; dims = 2)[:]
-C_hi_const_w = mapslices(q -> quantile(q, 0.83), res_const_w.C_post_const_w; dims = 2)[:]
+C_lo_const_w = mapslices(q -> quantile(q, 0.025), res_const_w.C_post_const_w; dims = 2)[:]
+C_hi_const_w = mapslices(q -> quantile(q, 0.975), res_const_w.C_post_const_w; dims = 2)[:]
 
 T_mean_const_w = mean(res_const_w.T_post_const_w; dims = 2)[:]
-T_lo_const_w = mapslices(q -> quantile(q, 0.17), res_const_w.T_post_const_w; dims = 2)[:]
-T_hi_const_w = mapslices(q -> quantile(q, 0.83), res_const_w.T_post_const_w; dims = 2)[:]
+T_lo_const_w = mapslices(q -> quantile(q, 0.025), res_const_w.T_post_const_w; dims = 2)[:]
+T_hi_const_w = mapslices(q -> quantile(q, 0.975), res_const_w.T_post_const_w; dims = 2)[:]
 
 C_mean_O_rw = mean(res_O_rw.C_post_O_rw; dims = 2)[:]
-C_lo_O_rw = mapslices(q -> quantile(q, 0.17), res_O_rw.C_post_O_rw; dims = 2)[:]
-C_hi_O_rw = mapslices(q -> quantile(q, 0.83), res_O_rw.C_post_O_rw; dims = 2)[:]
+C_lo_O_rw = mapslices(q -> quantile(q, 0.025), res_O_rw.C_post_O_rw; dims = 2)[:]
+C_hi_O_rw = mapslices(q -> quantile(q, 0.975), res_O_rw.C_post_O_rw; dims = 2)[:]
 
 T_mean_O_rw = mean(res_O_rw.T_post_O_rw; dims = 2)[:]
-T_lo_O_rw = mapslices(q -> quantile(q, 0.17), res_O_rw.T_post_O_rw; dims = 2)[:]
-T_hi_O_rw = mapslices(q -> quantile(q, 0.83), res_O_rw.T_post_O_rw; dims = 2)[:]
+T_lo_O_rw = mapslices(q -> quantile(q, 0.025), res_O_rw.T_post_O_rw; dims = 2)[:]
+T_hi_O_rw = mapslices(q -> quantile(q, 0.975), res_O_rw.T_post_O_rw; dims = 2)[:]
 
 C_mean_inc_fsr = mean(res_inc_fsr.C_post_inc_fsr; dims = 2)[:]
-C_lo_inc_fsr = mapslices(q -> quantile(q, 0.17), res_inc_fsr.C_post_inc_fsr; dims = 2)[:]
-C_hi_inc_fsr = mapslices(q -> quantile(q, 0.83), res_inc_fsr.C_post_inc_fsr; dims = 2)[:]
+C_lo_inc_fsr = mapslices(q -> quantile(q, 0.025), res_inc_fsr.C_post_inc_fsr; dims = 2)[:]
+C_hi_inc_fsr = mapslices(q -> quantile(q, 0.975), res_inc_fsr.C_post_inc_fsr; dims = 2)[:]
 
 T_mean_inc_fsr = mean(res_inc_fsr.T_post_inc_fsr; dims = 2)[:]
-T_lo_inc_fsr = mapslices(q -> quantile(q, 0.17), res_inc_fsr.T_post_inc_fsr; dims = 2)[:]
-T_hi_inc_fsr = mapslices(q -> quantile(q, 0.83), res_inc_fsr.T_post_inc_fsr; dims = 2)[:]
+T_lo_inc_fsr = mapslices(q -> quantile(q, 0.025), res_inc_fsr.T_post_inc_fsr; dims = 2)[:]
+T_hi_inc_fsr = mapslices(q -> quantile(q, 0.975), res_inc_fsr.T_post_inc_fsr; dims = 2)[:]
 
 C_med_plot = reverse(C_med)
 C_sd_plot = reverse(C_sd)
@@ -645,31 +645,31 @@ plot!(pC, t, C_mean_base;
       ribbon = (C_mean_base .- C_lo_base, C_hi_base .- C_mean_base),
       fillalpha = 0.5,
       color = :red3, linewidth = 6,
-      label = "Base case (66%)")
+      label = "Base case (95%)")
 
 plot!(pC, t, C_mean_inc_u;
       ribbon = (C_mean_inc_u .- C_lo_inc_u, C_hi_inc_u .- C_mean_inc_u),
       fillalpha = 0.2,
       color = :dodgerblue, linewidth = 6,
-      label = "Inflated uncertainties (66%)")
+      label = "Inflated uncertainties (95%)")
 
 plot!(pC, t, C_mean_const_w;
       ribbon = (C_mean_const_w .- C_lo_const_w, C_hi_const_w .- C_mean_const_w),
       fillalpha = 0.2,
       color = :purple, linewidth = 6,
-      label = "Constant weathering sensitivity (66%)")
+      label = "Constant weathering sensitivity (95%)")
 
 plot!(pC, t, C_mean_O_rw;
       ribbon = (C_mean_O_rw .- C_lo_O_rw, C_hi_O_rw .- C_mean_O_rw),
       fillalpha = 0.2,
       color = :darkorange, linewidth = 6,
-      label = "Other forcing random walk (66%)")
+      label = "Other forcing random walk (95%)")
 
 plot!(pC, t, C_mean_inc_fsr;
       ribbon = (C_mean_inc_fsr .- C_lo_inc_fsr, C_hi_inc_fsr .- C_mean_inc_fsr),
       fillalpha = 0.2,
       color = :seagreen, linewidth = 6,
-      label = "Increased degassing bounds (66%)")
+      label = "Increased degassing bounds (95%)")
 
 scatter!(pC, t, C_med_plot;
          yerror = C_sd_plot,
@@ -680,31 +680,31 @@ plot!(pT, t, T_mean_base;
       ribbon = (T_mean_base .- T_lo_base, T_hi_base .- T_mean_base),
       fillalpha = 0.5,
       color = :red3, linewidth = 6,
-      label = "Base case (66%)")
+      label = "Base case (95%)")
 
 plot!(pT, t, T_mean_inc_u;
       ribbon = (T_mean_inc_u .- T_lo_inc_u, T_hi_inc_u .- T_mean_inc_u),
       fillalpha = 0.2,
       color = :dodgerblue, linewidth = 6,
-      label = "Inflated uncertainties (66%)")
+      label = "Inflated uncertainties (95%)")
 
 plot!(pT, t, T_mean_const_w;
       ribbon = (T_mean_const_w .- T_lo_const_w, T_hi_const_w .- T_mean_const_w),
       fillalpha = 0.2,
       color = :purple, linewidth = 6,
-      label = "Constant weathering sensitivity (66%)")
+      label = "Constant weathering sensitivity (95%)")
 
 plot!(pT, t, T_mean_O_rw;
       ribbon = (T_mean_O_rw .- T_lo_O_rw, T_hi_O_rw .- T_mean_O_rw),
       fillalpha = 0.2,
       color = :darkorange, linewidth = 6,
-      label = "Other forcing random walk (66%)")
+      label = "Other forcing random walk (95%)")
 
 plot!(pT, t, T_mean_inc_fsr;
       ribbon = (T_mean_inc_fsr .- T_lo_inc_fsr, T_hi_inc_fsr .- T_mean_inc_fsr),
       fillalpha = 0.2,
       color = :seagreen, linewidth = 6,
-      label = "Increased degassing bounds (66%)")
+      label = "Increased degassing bounds (95%)")
 
 scatter!(pT, t, T_diff_plot;
          yerror = yerr_T,
@@ -772,24 +772,24 @@ ESS_post_O_rw = ESS_post(chain4, t; draws = 4500)
 ESS_post_inc_fsr = ESS_post(chain5, t; draws = 4500)
 
 ESS_mean_base = mean(ESS_post_base; dims = 2)[:]
-ESS_lo_base = mapslices(q -> quantile(q, 0.17), ESS_post_base; dims = 2)[:]
-ESS_hi_base = mapslices(q -> quantile(q, 0.83), ESS_post_base; dims = 2)[:]
+ESS_lo_base = mapslices(q -> quantile(q, 0.025), ESS_post_base; dims = 2)[:]
+ESS_hi_base = mapslices(q -> quantile(q, 0.975), ESS_post_base; dims = 2)[:]
 
 ESS_mean_inc_u = mean(ESS_post_inc_u; dims = 2)[:]
-ESS_lo_inc_u = mapslices(q -> quantile(q, 0.17), ESS_post_inc_u; dims = 2)[:]
-ESS_hi_inc_u = mapslices(q -> quantile(q, 0.83), ESS_post_inc_u; dims = 2)[:]
+ESS_lo_inc_u = mapslices(q -> quantile(q, 0.025), ESS_post_inc_u; dims = 2)[:]
+ESS_hi_inc_u = mapslices(q -> quantile(q, 0.975), ESS_post_inc_u; dims = 2)[:]
 
 ESS_mean_const_w = mean(ESS_post_const_w; dims = 2)[:]
-ESS_lo_const_w = mapslices(q -> quantile(q, 0.17), ESS_post_const_w; dims = 2)[:]
-ESS_hi_const_w = mapslices(q -> quantile(q, 0.83), ESS_post_const_w; dims = 2)[:]
+ESS_lo_const_w = mapslices(q -> quantile(q, 0.025), ESS_post_const_w; dims = 2)[:]
+ESS_hi_const_w = mapslices(q -> quantile(q, 0.975), ESS_post_const_w; dims = 2)[:]
 
 ESS_mean_O_rw = mean(ESS_post_O_rw; dims = 2)[:]
-ESS_lo_O_rw = mapslices(q -> quantile(q, 0.17), ESS_post_O_rw; dims = 2)[:]
-ESS_hi_O_rw = mapslices(q -> quantile(q, 0.83), ESS_post_O_rw; dims = 2)[:]
+ESS_lo_O_rw = mapslices(q -> quantile(q, 0.025), ESS_post_O_rw; dims = 2)[:]
+ESS_hi_O_rw = mapslices(q -> quantile(q, 0.975), ESS_post_O_rw; dims = 2)[:]
 
 ESS_mean_inc_fsr = mean(ESS_post_inc_fsr; dims = 2)[:]
-ESS_lo_inc_fsr = mapslices(q -> quantile(q, 0.17), ESS_post_inc_fsr; dims = 2)[:]
-ESS_hi_inc_fsr = mapslices(q -> quantile(q, 0.83), ESS_post_inc_fsr; dims = 2)[:]
+ESS_lo_inc_fsr = mapslices(q -> quantile(q, 0.025), ESS_post_inc_fsr; dims = 2)[:]
+ESS_hi_inc_fsr = mapslices(q -> quantile(q, 0.975), ESS_post_inc_fsr; dims = 2)[:]
 
 pESS = plot(; legend = true, xlabel = "Age (myr)", ylabel = "K/Doublings", title = "Earth System Sensitivity Posterior")
 
@@ -797,31 +797,31 @@ plot!(pESS, t, ESS_mean_base;
       ribbon = (ESS_mean_base .- ESS_lo_base, ESS_hi_base .- ESS_mean_base),
       fillalpha = 0.5,
       color = :red3, linewidth = 6,
-      label = "Base case (66%)")
+      label = "Base case (95%)")
 
 plot!(pESS, t, ESS_mean_inc_u;
       ribbon = (ESS_mean_inc_u .- ESS_lo_inc_u, ESS_hi_inc_u .- ESS_mean_inc_u),
       fillalpha = 0.2,
       color = :dodgerblue, linewidth = 6,
-      label = "Inflated uncertainties (66%)")
+      label = "Inflated uncertainties (95%)")
 
 plot!(pESS, t, ESS_mean_const_w;
       ribbon = (ESS_mean_const_w .- ESS_lo_const_w, ESS_hi_const_w .- ESS_mean_const_w),
       fillalpha = 0.2,
       color = :purple, linewidth = 6,
-      label = "Constant weathering sensitivity (66%)")
+      label = "Constant weathering sensitivity (95%)")
 
 plot!(pESS, t, ESS_mean_O_rw;
       ribbon = (ESS_mean_O_rw .- ESS_lo_O_rw, ESS_hi_O_rw .- ESS_mean_O_rw),
       fillalpha = 0.2,
       color = :darkorange, linewidth = 6,
-      label = "Other forcing random walk (66%)")
+      label = "Other forcing random walk (95%)")
 
 plot!(pESS, t, ESS_mean_inc_fsr;
       ribbon = (ESS_mean_inc_fsr .- ESS_lo_inc_fsr, ESS_hi_inc_fsr .- ESS_mean_inc_fsr),
       fillalpha = 0.2,
       color = :seagreen, linewidth = 6,
-      label = "Increased degassing bounds (66%)")
+      label = "Increased degassing bounds (95%)")
 
 #display(pESS)
 #savefig(pESS, joinpath(homedir(), "Desktop", "Cen_ESS_new.pdf"))
@@ -862,8 +862,8 @@ end
 O_post_mat = O_post(chain4, t; draws = 4500)
 
 O_mean = mean(O_post_mat; dims = 2)[:]
-O_lo = mapslices(q -> quantile(q, 0.17), O_post_mat; dims = 2)[:]
-O_hi = mapslices(q -> quantile(q, 0.83), O_post_mat; dims = 2)[:]
+O_lo = mapslices(q -> quantile(q, 0.025), O_post_mat; dims = 2)[:]
+O_hi = mapslices(q -> quantile(q, 0.975), O_post_mat; dims = 2)[:]
 
 pO = plot(
     t, O_mean;
@@ -872,7 +872,7 @@ pO = plot(
     title = "Other Forcing Posterior",
     color = :darkorange,
     legend = :topleft,
-    label = "Other forcing random walk (66%)",
+    label = "Other forcing random walk (95%)",
     lw = 5,
     grid = true,
     framestyle = :box,
@@ -958,24 +958,24 @@ println("O_rw: ", frac_O_rw)
 println("inc_fsr: ", frac_inc_fsr)
 
 w_mean_base = mean(w_post_base; dims = 2)[:]
-w_lo_base = mapslices(q -> quantile(q, 0.17), w_post_base; dims = 2)[:]
-w_hi_base = mapslices(q -> quantile(q, 0.83), w_post_base; dims = 2)[:]
+w_lo_base = mapslices(q -> quantile(q, 0.025), w_post_base; dims = 2)[:]
+w_hi_base = mapslices(q -> quantile(q, 0.975), w_post_base; dims = 2)[:]
 
 w_mean_inc_u = mean(w_post_inc_u; dims = 2)[:]
-w_lo_inc_u = mapslices(q -> quantile(q, 0.17), w_post_inc_u; dims = 2)[:]
-w_hi_inc_u = mapslices(q -> quantile(q, 0.83), w_post_inc_u; dims = 2)[:]
+w_lo_inc_u = mapslices(q -> quantile(q, 0.025), w_post_inc_u; dims = 2)[:]
+w_hi_inc_u = mapslices(q -> quantile(q, 0.975), w_post_inc_u; dims = 2)[:]
 
 w_mean_const = mean(w_post_const; dims = 2)[:]
-w_lo_const = mapslices(q -> quantile(q, 0.17), w_post_const; dims = 2)[:]
-w_hi_const = mapslices(q -> quantile(q, 0.83), w_post_const; dims = 2)[:]
+w_lo_const = mapslices(q -> quantile(q, 0.025), w_post_const; dims = 2)[:]
+w_hi_const = mapslices(q -> quantile(q, 0.975), w_post_const; dims = 2)[:]
 
 w_mean_O_rw = mean(w_post_O_rw; dims = 2)[:]
-w_lo_O_rw = mapslices(q -> quantile(q, 0.17), w_post_O_rw; dims = 2)[:]
-w_hi_O_rw = mapslices(q -> quantile(q, 0.83), w_post_O_rw; dims = 2)[:]
+w_lo_O_rw = mapslices(q -> quantile(q, 0.025), w_post_O_rw; dims = 2)[:]
+w_hi_O_rw = mapslices(q -> quantile(q, 0.975), w_post_O_rw; dims = 2)[:]
 
 w_mean_inc_fsr = mean(w_post_inc_fsr; dims = 2)[:]
-w_lo_inc_fsr = mapslices(q -> quantile(q, 0.17), w_post_inc_fsr; dims = 2)[:]
-w_hi_inc_fsr = mapslices(q -> quantile(q, 0.83), w_post_inc_fsr; dims = 2)[:]
+w_lo_inc_fsr = mapslices(q -> quantile(q, 0.025), w_post_inc_fsr; dims = 2)[:]
+w_hi_inc_fsr = mapslices(q -> quantile(q, 0.975), w_post_inc_fsr; dims = 2)[:]
 
 
 #pwT = plot(; legend = true, xlabel = "Age (myr)", ylabel = "Earth system sensitivity K/dbl")
@@ -1002,31 +1002,31 @@ plot!(pwT, t, w_mean_base;
       ribbon = (w_mean_base .- w_lo_base, w_hi_base .- w_mean_base),
       fillalpha = 0.5,
       color = :red3, linewidth = 6,
-      label = "Base case (66%)")
+      label = "Base case (95%)")
 
 plot!(pwT, t, w_mean_inc_u;
       ribbon = (w_mean_inc_u .- w_lo_inc_u, w_hi_inc_u .- w_mean_inc_u),
       fillalpha = 0.2,
       color = :dodgerblue, linewidth = 6,
-      label = "Inflated uncertainties (66%)")
+      label = "Inflated uncertainties (95%)")
 
 plot!(pwT, t, w_mean_const;
       ribbon = (w_mean_const .- w_lo_const, w_hi_const .- w_mean_const),
       fillalpha = 0.2,
       color = :purple, linewidth = 6,
-      label = "Constant weathering sensitivity (66%)")
+      label = "Constant weathering sensitivity (95%)")
 
 plot!(pwT, t, w_mean_O_rw;
       ribbon = (w_mean_O_rw .- w_lo_O_rw, w_hi_O_rw .- w_mean_O_rw),
       fillalpha = 0.2,
       color = :darkorange, linewidth = 6,
-      label = "Other forcing random walk (66%)")
+      label = "Other forcing random walk (95%)")
 
 plot!(pwT, t, w_mean_inc_fsr;
       ribbon = (w_mean_inc_fsr .- w_lo_inc_fsr, w_hi_inc_fsr .- w_mean_inc_fsr),
       fillalpha = 0.2,
       color = :seagreen, linewidth = 6,
-      label = "Increased degassing bounds (66%)")
+      label = "Increased degassing bounds (95%)")
 
 display(pwT)
 
@@ -1157,41 +1157,41 @@ feedback_post_inc_fsr_0, feedback_post_inc_fsr_5, _ = model_feedback_post(chain5
 
 #modern
 feedback_mean0_base = mean(feedback_post_base_0; dims = 1)[:]
-feedback_lo0_base = mapslices(q -> quantile(q, 0.17), feedback_post_base_0; dims = 1)[:]
-feedback_hi0_base = mapslices(q -> quantile(q, 0.83), feedback_post_base_0; dims = 1)[:]
+feedback_lo0_base = mapslices(q -> quantile(q, 0.025), feedback_post_base_0; dims = 1)[:]
+feedback_hi0_base = mapslices(q -> quantile(q, 0.975), feedback_post_base_0; dims = 1)[:]
 
 feedback_mean0_inc_u = mean(feedback_post_inc_u_0; dims = 1)[:]
-feedback_lo0_inc_u = mapslices(q -> quantile(q, 0.17), feedback_post_inc_u_0; dims = 1)[:]
-feedback_hi0_inc_u = mapslices(q -> quantile(q, 0.83), feedback_post_inc_u_0; dims = 1)[:]
+feedback_lo0_inc_u = mapslices(q -> quantile(q, 0.025), feedback_post_inc_u_0; dims = 1)[:]
+feedback_hi0_inc_u = mapslices(q -> quantile(q, 0.975), feedback_post_inc_u_0; dims = 1)[:]
 
 feedback_mean_const_w = mean(feedback_post_const_w; dims = 1)[:]
-feedback_lo_const_w = mapslices(q -> quantile(q, 0.17), feedback_post_const_w; dims = 1)[:]
-feedback_hi_const_w = mapslices(q -> quantile(q, 0.83), feedback_post_const_w; dims = 1)[:]
+feedback_lo_const_w = mapslices(q -> quantile(q, 0.025), feedback_post_const_w; dims = 1)[:]
+feedback_hi_const_w = mapslices(q -> quantile(q, 0.975), feedback_post_const_w; dims = 1)[:]
 
 feedback_mean0_O_rw = mean(feedback_post_O_rw_0; dims = 1)[:]
-feedback_lo0_O_rw = mapslices(q -> quantile(q, 0.17), feedback_post_O_rw_0; dims = 1)[:]
-feedback_hi0_O_rw = mapslices(q -> quantile(q, 0.83), feedback_post_O_rw_0; dims = 1)[:]
+feedback_lo0_O_rw = mapslices(q -> quantile(q, 0.025), feedback_post_O_rw_0; dims = 1)[:]
+feedback_hi0_O_rw = mapslices(q -> quantile(q, 0.975), feedback_post_O_rw_0; dims = 1)[:]
 
 feedback_mean0_inc_fsr = mean(feedback_post_inc_fsr_0; dims = 1)[:]
-feedback_lo0_inc_fsr = mapslices(q -> quantile(q, 0.17), feedback_post_inc_fsr_0; dims = 1)[:]
-feedback_hi0_inc_fsr = mapslices(q -> quantile(q, 0.83), feedback_post_inc_fsr_0; dims = 1)[:]
+feedback_lo0_inc_fsr = mapslices(q -> quantile(q, 0.025), feedback_post_inc_fsr_0; dims = 1)[:]
+feedback_hi0_inc_fsr = mapslices(q -> quantile(q, 0.975), feedback_post_inc_fsr_0; dims = 1)[:]
 
 #Eocene
 feedback_mean5_base = mean(feedback_post_base_5; dims = 1)[:]
-feedback_lo5_base = mapslices(q -> quantile(q, 0.17), feedback_post_base_5; dims = 1)[:]
-feedback_hi5_base = mapslices(q -> quantile(q, 0.83), feedback_post_base_5; dims = 1)[:]
+feedback_lo5_base = mapslices(q -> quantile(q, 0.025), feedback_post_base_5; dims = 1)[:]
+feedback_hi5_base = mapslices(q -> quantile(q, 0.975), feedback_post_base_5; dims = 1)[:]
 
 feedback_mean5_inc_u = mean(feedback_post_inc_u_5; dims = 1)[:]
-feedback_lo5_inc_u = mapslices(q -> quantile(q, 0.17), feedback_post_inc_u_5; dims = 1)[:]
-feedback_hi5_inc_u = mapslices(q -> quantile(q, 0.83), feedback_post_inc_u_5; dims = 1)[:]
+feedback_lo5_inc_u = mapslices(q -> quantile(q, 0.025), feedback_post_inc_u_5; dims = 1)[:]
+feedback_hi5_inc_u = mapslices(q -> quantile(q, 0.975), feedback_post_inc_u_5; dims = 1)[:]
 
 feedback_mean5_O_rw = mean(feedback_post_O_rw_5; dims = 1)[:]
-feedback_lo5_O_rw = mapslices(q -> quantile(q, 0.17), feedback_post_O_rw_5; dims = 1)[:]
-feedback_hi5_O_rw = mapslices(q -> quantile(q, 0.83), feedback_post_O_rw_5; dims = 1)[:]
+feedback_lo5_O_rw = mapslices(q -> quantile(q, 0.025), feedback_post_O_rw_5; dims = 1)[:]
+feedback_hi5_O_rw = mapslices(q -> quantile(q, 0.975), feedback_post_O_rw_5; dims = 1)[:]
 
 feedback_mean5_inc_fsr = mean(feedback_post_inc_fsr_5; dims = 1)[:]
-feedback_lo5_inc_fsr = mapslices(q -> quantile(q, 0.17), feedback_post_inc_fsr_5; dims = 1)[:]
-feedback_hi5_inc_fsr = mapslices(q -> quantile(q, 0.83), feedback_post_inc_fsr_5; dims = 1)[:]
+feedback_lo5_inc_fsr = mapslices(q -> quantile(q, 0.025), feedback_post_inc_fsr_5; dims = 1)[:]
+feedback_hi5_inc_fsr = mapslices(q -> quantile(q, 0.975), feedback_post_inc_fsr_5; dims = 1)[:]
 
 pFw = plot(
     pCO2_grid, feedback_mean0_base;
@@ -1216,56 +1216,56 @@ plot!(pFw, pCO2_grid, feedback_mean0_base;
       ribbon = (feedback_mean0_base .- feedback_lo0_base, feedback_hi0_base .- feedback_mean0_base),
       fillalpha = 0.5,
       color = :red3, linewidth = 6, linestyle = :solid,
-      label = "Base case modern (66%)")
+      label = "Base case modern (95%)")
 
 plot!(pFw, pCO2_grid, feedback_mean0_inc_u;
       ribbon = (feedback_mean0_inc_u .- feedback_lo0_inc_u, feedback_hi0_inc_u .- feedback_mean0_inc_u),
       fillalpha = 0.1,
       color = :dodgerblue, linewidth = 6, linestyle = :solid,
-      label = "Inflated uncertainties modern (66%)")
+      label = "Inflated uncertainties modern (95%)")
 
 plot!(pFw, pCO2_grid, feedback_mean_const_w;
       ribbon = (feedback_mean_const_w .- feedback_lo_const_w, feedback_hi_const_w .- feedback_mean_const_w),
       fillalpha = 0.1,
       color = :purple, linewidth = 6, linestyle = :solid,
-      label = "constant weathering sensitivity (66%)")
+      label = "constant weathering sensitivity (95%)")
 
 plot!(pFw, pCO2_grid, feedback_mean0_O_rw;
       ribbon = (feedback_mean0_O_rw .- feedback_lo0_O_rw, feedback_hi0_O_rw .- feedback_mean0_O_rw),
       fillalpha = 0.1,
       color = :darkorange, linewidth = 6, linestyle = :solid,
-      label = "Other forcing random walk modern (66%)")
+      label = "Other forcing random walk modern (95%)")
 
 plot!(pFw, pCO2_grid, feedback_mean0_inc_fsr;
       ribbon = (feedback_mean0_inc_fsr .- feedback_lo0_inc_fsr, feedback_hi0_inc_fsr .- feedback_mean0_inc_fsr),
       fillalpha = 0.1,
       color = :seagreen, linewidth = 6, linestyle = :solid,
-      label = "Increased degassing bounds modern (66%)")
+      label = "Increased degassing bounds modern (95%)")
 
 #Eocene curves
 plot!(pFw, pCO2_grid, feedback_mean5_base;
       ribbon = (feedback_mean5_base .- feedback_lo5_base, feedback_hi5_base .- feedback_mean5_base),
       fillalpha = 0.3, linestyle = :dash,
       color = :red3, linewidth = 6,
-      label = "Base case Eocene (66%)")
+      label = "Base case Eocene (95%)")
 
 plot!(pFw, pCO2_grid, feedback_mean5_inc_u;
       ribbon = (feedback_mean5_inc_u .- feedback_lo5_inc_u, feedback_hi5_inc_u .- feedback_mean5_inc_u),
       fillalpha = 0.05, linestyle = :dash,
       color = :dodgerblue, linewidth = 6,
-      label = "Inflated uncertainties Eocene (66%)")
+      label = "Inflated uncertainties Eocene (95%)")
 
 plot!(pFw, pCO2_grid, feedback_mean5_O_rw;
       ribbon = (feedback_mean5_O_rw .- feedback_lo5_O_rw, feedback_hi5_O_rw .- feedback_mean5_O_rw),
       fillalpha = 0.05, linestyle = :dash,
       color = :darkorange, linewidth = 6,
-      label = "Other forcing random walk Eocene (66%)")
+      label = "Other forcing random walk Eocene (95%)")
 
 plot!(pFw, pCO2_grid, feedback_mean5_inc_fsr;
       ribbon = (feedback_mean5_inc_fsr .- feedback_lo5_inc_fsr, feedback_hi5_inc_fsr .- feedback_mean5_inc_fsr),
       fillalpha = 0.05, linestyle = :dash,
       color = :seagreen, linewidth = 6,
-      label = "Increased degassing bounds Eocene (66%)")
+      label = "Increased degassing bounds Eocene (95%)")
 
 #display(pFw)
 
@@ -1437,32 +1437,32 @@ G_post_O_rw, _ = G_post(chain4, t, lo_vals, hi_vals; draws = 4500)
 G_post_inc_fsr, _ = G_post(chain5, t, lo_vals_inc_fsr, hi_vals_inc_fsr; draws = 4500)
 
 G_mean_base = mean(G_post_base; dims = 2)[:]
-G_lo_base = mapslices(q -> quantile(q, 0.17), G_post_base; dims = 2)[:]
-G_hi_base = mapslices(q -> quantile(q, 0.83), G_post_base; dims = 2)[:]
+G_lo_base = mapslices(q -> quantile(q, 0.025), G_post_base; dims = 2)[:]
+G_hi_base = mapslices(q -> quantile(q, 0.975), G_post_base; dims = 2)[:]
 
 G0_post_mean_base = mean(G0_post_base)
-G0_post_lo_base = quantile(G0_post_base, 0.17)
-G0_post_hi_base = quantile(G0_post_base, 0.83)
+G0_post_lo_base = quantile(G0_post_base, 0.025)
+G0_post_hi_base = quantile(G0_post_base, 0.975)
 
 G0_lo_vals = reverse(lo_vals .* G0_post_lo_base .- G0_post_lo_base)
 G0_hi_vals = reverse(hi_vals .* G0_post_hi_base .- G0_post_hi_base)
 G0_mean_vals = reverse(((hi_vals .+ lo_vals)./2 .* G0_post_mean_base) .- G0_post_mean_base)
 
 G_mean_inc_u = mean(G_post_inc_u; dims = 2)[:]
-G_lo_inc_u = mapslices(q -> quantile(q, 0.17), G_post_inc_u; dims = 2)[:]
-G_hi_inc_u = mapslices(q -> quantile(q, 0.83), G_post_inc_u; dims = 2)[:]
+G_lo_inc_u = mapslices(q -> quantile(q, 0.025), G_post_inc_u; dims = 2)[:]
+G_hi_inc_u = mapslices(q -> quantile(q, 0.975), G_post_inc_u; dims = 2)[:]
 
 G_mean_const_w = mean(G_post_const_w; dims = 2)[:]
-G_lo_const_w = mapslices(q -> quantile(q, 0.17), G_post_const_w; dims = 2)[:]
-G_hi_const_w = mapslices(q -> quantile(q, 0.83), G_post_const_w; dims = 2)[:]
+G_lo_const_w = mapslices(q -> quantile(q, 0.025), G_post_const_w; dims = 2)[:]
+G_hi_const_w = mapslices(q -> quantile(q, 0.975), G_post_const_w; dims = 2)[:]
 
 G_mean_O_rw = mean(G_post_O_rw; dims = 2)[:]
-G_lo_O_rw = mapslices(q -> quantile(q, 0.17), G_post_O_rw; dims = 2)[:]
-G_hi_O_rw = mapslices(q -> quantile(q, 0.83), G_post_O_rw; dims = 2)[:]
+G_lo_O_rw = mapslices(q -> quantile(q, 0.025), G_post_O_rw; dims = 2)[:]
+G_hi_O_rw = mapslices(q -> quantile(q, 0.975), G_post_O_rw; dims = 2)[:]
 
 G_mean_inc_fsr = mean(G_post_inc_fsr; dims = 2)[:]
-G_lo_inc_fsr = mapslices(q -> quantile(q, 0.17), G_post_inc_fsr; dims = 2)[:]
-G_hi_inc_fsr = mapslices(q -> quantile(q, 0.83), G_post_inc_fsr; dims = 2)[:]
+G_lo_inc_fsr = mapslices(q -> quantile(q, 0.025), G_post_inc_fsr; dims = 2)[:]
+G_hi_inc_fsr = mapslices(q -> quantile(q, 0.975), G_post_inc_fsr; dims = 2)[:]
 
 
 
@@ -1484,31 +1484,31 @@ plot!(pG, t, G_mean_base;
       ribbon = (G_mean_base .- G_lo_base, G_hi_base .- G_mean_base),
       fillalpha = 0.5,
       color = :red3, linewidth = 6,
-      label = "Base case (66%)")
+      label = "Base case (95%)")
 
 plot!(pG, t, G_mean_inc_u;
       ribbon = (G_mean_inc_u .- G_lo_inc_u, G_hi_inc_u .- G_mean_inc_u),
       fillalpha = 0.2,
       color = :dodgerblue, linewidth = 6,
-      label = "Inflated uncertainties (66%)")
+      label = "Inflated uncertainties (95%)")
 
 plot!(pG, t, G_mean_const_w;
       ribbon = (G_mean_const_w .- G_lo_const_w, G_hi_const_w .- G_mean_const_w),
       fillalpha = 0.2,
       color = :purple, linewidth = 6,
-      label = "Constant weathering sensitivity (66%)")
+      label = "Constant weathering sensitivity (95%)")
 
 plot!(pG, t, G_mean_O_rw;
       ribbon = (G_mean_O_rw .- G_lo_O_rw, G_hi_O_rw .- G_mean_O_rw),
       fillalpha = 0.2,
       color = :darkorange, linewidth = 6,
-      label = "Other forcing random walk (66%)")
+      label = "Other forcing random walk (95%)")
 
 plot!(pG, t, G_mean_inc_fsr;
       ribbon = (G_mean_inc_fsr .- G_lo_inc_fsr, G_hi_inc_fsr .- G_mean_inc_fsr),
       fillalpha = 0.2,
       color = :seagreen, linewidth = 6,
-      label = "Increased degassing bounds (66%)")
+      label = "Increased degassing bounds (95%)")
 
 plot!(pG, t, G0_lo_vals;
       color = :black, linewidth = 6,
