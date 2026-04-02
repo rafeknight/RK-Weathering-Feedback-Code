@@ -11,15 +11,15 @@ using CO2System
 
 #******* model trajectories ******* 
 #base case
-csv_path1 = joinpath(homedir(), "Desktop", "fullchain_final_TU1_1500_copy")
+csv_path1 = joinpath(homedir(), "Desktop", "fullchain_final_TU1_1500")
 #inflated uncertainties
-csv_path2 = joinpath(homedir(), "Desktop", "fullchain_final_loose_1500_copy")
+csv_path2 = joinpath(homedir(), "Desktop", "fullchain_final_loose_1500")
 #constant weathering sensitivity
-csv_path3 = joinpath(homedir(), "Desktop", "fullchain_final_constant_w_1500_copy")
+csv_path3 = joinpath(homedir(), "Desktop", "fullchain_final_constant_w_1500")
 #other forcing as a random walk
-csv_path4 = joinpath(homedir(), "Desktop", "fullchain_final_O_rw_1500_copy")
+csv_path4 = joinpath(homedir(), "Desktop", "fullchain_final_O_rw_1500")
 #increased upper bounds on degassing
-csv_path5 = joinpath(homedir(), "Desktop", "fullchain_final_inc_G_1500_copy")
+csv_path5 = joinpath(homedir(), "Desktop", "fullchain_final_inc_G_1500")
 
 df1 = CSV.read(csv_path1, DataFrame)
 df2 = CSV.read(csv_path2, DataFrame)
@@ -75,7 +75,7 @@ itp = extrapolate(interpolate((λ0_grid, ALK_grid), a_grid, Gridded(Linear())), 
 
 
 #******* CenCO2PIP reconstructions ******* 
-csv_path_rec = joinpath(homedir(), "Downloads", "cenco2pip_500kyr_testrev_ppm_12_copy.csv")
+csv_path_rec = joinpath(homedir(), "Downloads", "cenco2pip_500kyr_testrev_ppm_12.csv")
 df_rec = CSV.read(csv_path_rec, DataFrame)
 
 t = Float64.(df_rec.Age)
@@ -143,10 +143,10 @@ prob_O_rw = ODEProblem(cen_ode_O_rw!, [0.0, 0.0], (t[1], t[end]))
 #******* plot settings ******* 
 default(
     guidefont = font(32),
-    tickfont = font(22),
+    tickfont = font(30),
     legendfont = font(10,),
     titlefont = font(32),
-    annotationfontsize = 35
+    annotationfontsize = 35, widen = true
 )
 
 
@@ -642,74 +642,74 @@ pC = plot(; legend = true, xlabel = "Age (myr)", ylabel = "Doublings", title = "
 pT = plot(; legend = true, xlabel = "Age (myr)", ylabel = "GMST anomaly (K)", title = "GMST Anomaly Posterior" )
 
 plot!(pC, t, C_mean_base;
-      ribbon = (C_mean_base .- C_lo_base, C_hi_base .- C_mean_base),
-      fillalpha = 0.5,
-      color = :red3, linewidth = 6,
-      label = "Base case (95%)")
+    ribbon = (C_mean_base .- C_lo_base, C_hi_base .- C_mean_base),
+    fillalpha = 0.5,
+    color = :red3, linewidth = 6,
+    label = "Base case (95%)")
 
 plot!(pC, t, C_mean_inc_u;
-      ribbon = (C_mean_inc_u .- C_lo_inc_u, C_hi_inc_u .- C_mean_inc_u),
-      fillalpha = 0.2,
-      color = :dodgerblue, linewidth = 6,
-      label = "Inflated uncertainties (95%)")
+    ribbon = (C_mean_inc_u .- C_lo_inc_u, C_hi_inc_u .- C_mean_inc_u),
+    fillalpha = 0.2,
+    color = :dodgerblue, linewidth = 6,
+    label = "Inflated uncertainties (95%)")
 
 plot!(pC, t, C_mean_const_w;
-      ribbon = (C_mean_const_w .- C_lo_const_w, C_hi_const_w .- C_mean_const_w),
-      fillalpha = 0.2,
-      color = :purple, linewidth = 6,
-      label = "Constant weathering sensitivity (95%)")
+    ribbon = (C_mean_const_w .- C_lo_const_w, C_hi_const_w .- C_mean_const_w),
+    fillalpha = 0.2,
+    color = :purple, linewidth = 6,
+    label = "Constant weathering sensitivity (95%)")
 
 plot!(pC, t, C_mean_O_rw;
-      ribbon = (C_mean_O_rw .- C_lo_O_rw, C_hi_O_rw .- C_mean_O_rw),
-      fillalpha = 0.2,
-      color = :darkorange, linewidth = 6,
-      label = "Other forcing random walk (95%)")
+    ribbon = (C_mean_O_rw .- C_lo_O_rw, C_hi_O_rw .- C_mean_O_rw),
+    fillalpha = 0.2,
+    color = :darkorange, linewidth = 6,
+    label = "Other forcing random walk (95%)")
 
 plot!(pC, t, C_mean_inc_fsr;
-      ribbon = (C_mean_inc_fsr .- C_lo_inc_fsr, C_hi_inc_fsr .- C_mean_inc_fsr),
-      fillalpha = 0.2,
-      color = :seagreen, linewidth = 6,
-      label = "Increased degassing bounds (95%)")
+    ribbon = (C_mean_inc_fsr .- C_lo_inc_fsr, C_hi_inc_fsr .- C_mean_inc_fsr),
+    fillalpha = 0.2,
+    color = :seagreen, linewidth = 6,
+    label = "Increased degassing bounds (95%)")
 
 scatter!(pC, t, C_med_plot;
-         yerror = C_sd_plot,
-         color = :black, ms = 1, msw = 0.1,
-         label = false, lw = 0.5)
+    yerror = C_sd_plot,
+    color = :black, ms = 1, msw = 0.1,
+    label = false, lw = 0.5)
 
 plot!(pT, t, T_mean_base;
-      ribbon = (T_mean_base .- T_lo_base, T_hi_base .- T_mean_base),
-      fillalpha = 0.5,
-      color = :red3, linewidth = 6,
-      label = "Base case (95%)")
+    ribbon = (T_mean_base .- T_lo_base, T_hi_base .- T_mean_base),
+    fillalpha = 0.5,
+    color = :red3, linewidth = 6,
+    label = "Base case (95%)")
 
 plot!(pT, t, T_mean_inc_u;
-      ribbon = (T_mean_inc_u .- T_lo_inc_u, T_hi_inc_u .- T_mean_inc_u),
-      fillalpha = 0.2,
-      color = :dodgerblue, linewidth = 6,
-      label = "Inflated uncertainties (95%)")
+    ribbon = (T_mean_inc_u .- T_lo_inc_u, T_hi_inc_u .- T_mean_inc_u),
+    fillalpha = 0.2,
+    color = :dodgerblue, linewidth = 6,
+    label = "Inflated uncertainties (95%)")
 
 plot!(pT, t, T_mean_const_w;
-      ribbon = (T_mean_const_w .- T_lo_const_w, T_hi_const_w .- T_mean_const_w),
-      fillalpha = 0.2,
-      color = :purple, linewidth = 6,
-      label = "Constant weathering sensitivity (95%)")
+    ribbon = (T_mean_const_w .- T_lo_const_w, T_hi_const_w .- T_mean_const_w),
+    fillalpha = 0.2,
+    color = :purple, linewidth = 6,
+    label = "Constant weathering sensitivity (95%)")
 
 plot!(pT, t, T_mean_O_rw;
-      ribbon = (T_mean_O_rw .- T_lo_O_rw, T_hi_O_rw .- T_mean_O_rw),
-      fillalpha = 0.2,
-      color = :darkorange, linewidth = 6,
-      label = "Other forcing random walk (95%)")
+    ribbon = (T_mean_O_rw .- T_lo_O_rw, T_hi_O_rw .- T_mean_O_rw),
+    fillalpha = 0.2,
+    color = :darkorange, linewidth = 6,
+    label = "Other forcing random walk (95%)")
 
 plot!(pT, t, T_mean_inc_fsr;
-      ribbon = (T_mean_inc_fsr .- T_lo_inc_fsr, T_hi_inc_fsr .- T_mean_inc_fsr),
-      fillalpha = 0.2,
-      color = :seagreen, linewidth = 6,
-      label = "Increased degassing bounds (95%)")
+    ribbon = (T_mean_inc_fsr .- T_lo_inc_fsr, T_hi_inc_fsr .- T_mean_inc_fsr),
+    fillalpha = 0.2,
+    color = :seagreen, linewidth = 6,
+    label = "Increased degassing bounds (95%)")
 
 scatter!(pT, t, T_diff_plot;
-         yerror = yerr_T,
-         color = :black, ms = 1, msw = 0.1,
-         label = false, lw = 0.5)
+    yerror = yerr_T,
+    color = :black, ms = 1, msw = 0.1,
+    label = false, lw = 0.5)
 
 #panel labels
 (x1, x2) = xlims(pC); (y1, y2) = ylims(pC)
@@ -721,14 +721,14 @@ dx = 0.02 * (x2 - x1); dy = 0.03 * (y2 - y1)
 annotate!(pT, x1 + dx, y2 - dy, text("B", 35))
 
 p_combined_C_T = plot(pC, pT;
-         layout = (2, 1),
-         link = :x,
-         size = (1200, 1600),
-         margin = 0mm,
-         left_margin = 18mm, right_margin = 0mm,
-         bottom_margin = 5mm, top_margin = 6mm,
-         guide_padding = 0mm,
-         framestyle = :box)
+    layout = (2, 1),
+    link = :x,
+    size = (1200, 1600),
+    margin = 0mm,
+    left_margin = 18mm, right_margin = 0mm,
+    bottom_margin = 5mm, top_margin = 6mm,
+    guide_padding = 0mm,
+    framestyle = :box)
 
 display(p_combined_C_T)
 
@@ -794,34 +794,34 @@ ESS_hi_inc_fsr = mapslices(q -> quantile(q, 0.975), ESS_post_inc_fsr; dims = 2)[
 pESS = plot(; legend = true, xlabel = "Age (myr)", ylabel = "K/Doublings", title = "Earth System Sensitivity Posterior")
 
 plot!(pESS, t, ESS_mean_base;
-      ribbon = (ESS_mean_base .- ESS_lo_base, ESS_hi_base .- ESS_mean_base),
-      fillalpha = 0.5,
-      color = :red3, linewidth = 6,
-      label = "Base case (95%)")
+    ribbon = (ESS_mean_base .- ESS_lo_base, ESS_hi_base .- ESS_mean_base),
+    fillalpha = 0.5,
+    color = :red3, linewidth = 6,
+    label = "Base case (95%)")
 
 plot!(pESS, t, ESS_mean_inc_u;
-      ribbon = (ESS_mean_inc_u .- ESS_lo_inc_u, ESS_hi_inc_u .- ESS_mean_inc_u),
-      fillalpha = 0.2,
-      color = :dodgerblue, linewidth = 6,
-      label = "Inflated uncertainties (95%)")
+    ribbon = (ESS_mean_inc_u .- ESS_lo_inc_u, ESS_hi_inc_u .- ESS_mean_inc_u),
+    fillalpha = 0.2,
+    color = :dodgerblue, linewidth = 6,
+    label = "Inflated uncertainties (95%)")
 
 plot!(pESS, t, ESS_mean_const_w;
-      ribbon = (ESS_mean_const_w .- ESS_lo_const_w, ESS_hi_const_w .- ESS_mean_const_w),
-      fillalpha = 0.2,
-      color = :purple, linewidth = 6,
-      label = "Constant weathering sensitivity (95%)")
+    ribbon = (ESS_mean_const_w .- ESS_lo_const_w, ESS_hi_const_w .- ESS_mean_const_w),
+    fillalpha = 0.2,
+    color = :purple, linewidth = 6,
+    label = "Constant weathering sensitivity (95%)")
 
 plot!(pESS, t, ESS_mean_O_rw;
-      ribbon = (ESS_mean_O_rw .- ESS_lo_O_rw, ESS_hi_O_rw .- ESS_mean_O_rw),
-      fillalpha = 0.2,
-      color = :darkorange, linewidth = 6,
-      label = "Other forcing random walk (95%)")
+    ribbon = (ESS_mean_O_rw .- ESS_lo_O_rw, ESS_hi_O_rw .- ESS_mean_O_rw),
+    fillalpha = 0.2,
+    color = :darkorange, linewidth = 6,
+    label = "Other forcing random walk (95%)")
 
 plot!(pESS, t, ESS_mean_inc_fsr;
-      ribbon = (ESS_mean_inc_fsr .- ESS_lo_inc_fsr, ESS_hi_inc_fsr .- ESS_mean_inc_fsr),
-      fillalpha = 0.2,
-      color = :seagreen, linewidth = 6,
-      label = "Increased degassing bounds (95%)")
+    ribbon = (ESS_mean_inc_fsr .- ESS_lo_inc_fsr, ESS_hi_inc_fsr .- ESS_mean_inc_fsr),
+    fillalpha = 0.2,
+    color = :seagreen, linewidth = 6,
+    label = "Increased degassing bounds (95%)")
 
 #display(pESS)
 #savefig(pESS, joinpath(homedir(), "Desktop", "Cen_ESS_new.pdf"))
@@ -897,14 +897,14 @@ annotate!(pO, x1 + dx, y2 - dy, text("B", 35))
 
 
 p_combined_ESS_O = plot(pESS, pO;
-         layout = (2, 1),
-         link = :x,
-         size = (1200, 1600),
-         margin = 0mm,
-         left_margin = 18mm, right_margin = 0mm,
-         bottom_margin = 8mm, top_margin = 6mm,
-         guide_padding = 0mm,
-         framestyle = :box)
+    layout = (2, 1),
+    link = :x,
+    size = (1200, 1600),
+    margin = 0mm,
+    left_margin = 18mm, right_margin = 0mm,
+    bottom_margin = 8mm, top_margin = 6mm,
+    guide_padding = 0mm,
+    framestyle = :box)
 
 display(p_combined_ESS_O)
 
@@ -991,6 +991,7 @@ pwT = plot(
     grid = true,
     framestyle = :box,
     size = (1400, 800),
+    ylims = (3, 37),
     margin = 0mm,
     left_margin = 8mm, right_margin = 6mm,
     bottom_margin = 8mm, top_margin = 6mm,
@@ -999,34 +1000,34 @@ pwT = plot(
 
 
 plot!(pwT, t, w_mean_base;
-      ribbon = (w_mean_base .- w_lo_base, w_hi_base .- w_mean_base),
-      fillalpha = 0.5,
-      color = :red3, linewidth = 6,
-      label = "Base case (95%)")
+    ribbon = (w_mean_base .- w_lo_base, w_hi_base .- w_mean_base),
+    fillalpha = 0.5,
+    color = :red3, linewidth = 6,
+    label = "Base case (95%)")
 
 plot!(pwT, t, w_mean_inc_u;
-      ribbon = (w_mean_inc_u .- w_lo_inc_u, w_hi_inc_u .- w_mean_inc_u),
-      fillalpha = 0.2,
-      color = :dodgerblue, linewidth = 6,
-      label = "Inflated uncertainties (95%)")
+    ribbon = (w_mean_inc_u .- w_lo_inc_u, w_hi_inc_u .- w_mean_inc_u),
+    fillalpha = 0.2,
+    color = :dodgerblue, linewidth = 6,
+    label = "Inflated uncertainties (95%)")
 
 plot!(pwT, t, w_mean_const;
-      ribbon = (w_mean_const .- w_lo_const, w_hi_const .- w_mean_const),
-      fillalpha = 0.2,
-      color = :purple, linewidth = 6,
-      label = "Constant weathering sensitivity (95%)")
+    ribbon = (w_mean_const .- w_lo_const, w_hi_const .- w_mean_const),
+    fillalpha = 0.2,
+    color = :purple, linewidth = 6,
+    label = "Constant weathering sensitivity (95%)")
 
 plot!(pwT, t, w_mean_O_rw;
-      ribbon = (w_mean_O_rw .- w_lo_O_rw, w_hi_O_rw .- w_mean_O_rw),
-      fillalpha = 0.2,
-      color = :darkorange, linewidth = 6,
-      label = "Other forcing random walk (95%)")
+    ribbon = (w_mean_O_rw .- w_lo_O_rw, w_hi_O_rw .- w_mean_O_rw),
+    fillalpha = 0.2,
+    color = :darkorange, linewidth = 6,
+    label = "Other forcing random walk (95%)")
 
 plot!(pwT, t, w_mean_inc_fsr;
-      ribbon = (w_mean_inc_fsr .- w_lo_inc_fsr, w_hi_inc_fsr .- w_mean_inc_fsr),
-      fillalpha = 0.2,
-      color = :seagreen, linewidth = 6,
-      label = "Increased degassing bounds (95%)")
+    ribbon = (w_mean_inc_fsr .- w_lo_inc_fsr, w_hi_inc_fsr .- w_mean_inc_fsr),
+    fillalpha = 0.2,
+    color = :seagreen, linewidth = 6,
+    label = "Increased degassing bounds (95%)")
 
 display(pwT)
 
@@ -1206,66 +1207,66 @@ pFw = plot(
     framestyle = :box,
     size = (1400, 800),
     margin = 0mm,
-    left_margin = 8mm, right_margin = 6mm,
+    left_margin = 8mm, right_margin = 8mm,
     bottom_margin = 8mm, top_margin = 6mm,
     guide_padding = 4mm
 )
 
 #modern curves
 plot!(pFw, pCO2_grid, feedback_mean0_base;
-      ribbon = (feedback_mean0_base .- feedback_lo0_base, feedback_hi0_base .- feedback_mean0_base),
-      fillalpha = 0.5,
-      color = :red3, linewidth = 6, linestyle = :solid,
-      label = "Base case modern (95%)")
+    ribbon = (feedback_mean0_base .- feedback_lo0_base, feedback_hi0_base .- feedback_mean0_base),
+    fillalpha = 0.5,
+    color = :red3, linewidth = 6, linestyle = :solid,
+    label = "Base case modern (95%)")
 
 plot!(pFw, pCO2_grid, feedback_mean0_inc_u;
-      ribbon = (feedback_mean0_inc_u .- feedback_lo0_inc_u, feedback_hi0_inc_u .- feedback_mean0_inc_u),
-      fillalpha = 0.1,
-      color = :dodgerblue, linewidth = 6, linestyle = :solid,
-      label = "Inflated uncertainties modern (95%)")
+    ribbon = (feedback_mean0_inc_u .- feedback_lo0_inc_u, feedback_hi0_inc_u .- feedback_mean0_inc_u),
+    fillalpha = 0.1,
+    color = :dodgerblue, linewidth = 6, linestyle = :solid,
+    label = "Inflated uncertainties modern (95%)")
 
 plot!(pFw, pCO2_grid, feedback_mean_const_w;
-      ribbon = (feedback_mean_const_w .- feedback_lo_const_w, feedback_hi_const_w .- feedback_mean_const_w),
-      fillalpha = 0.1,
-      color = :purple, linewidth = 6, linestyle = :solid,
-      label = "constant weathering sensitivity (95%)")
+    ribbon = (feedback_mean_const_w .- feedback_lo_const_w, feedback_hi_const_w .- feedback_mean_const_w),
+    fillalpha = 0.1,
+    color = :purple, linewidth = 6, linestyle = :solid,
+    label = "constant weathering sensitivity (95%)")
 
 plot!(pFw, pCO2_grid, feedback_mean0_O_rw;
-      ribbon = (feedback_mean0_O_rw .- feedback_lo0_O_rw, feedback_hi0_O_rw .- feedback_mean0_O_rw),
-      fillalpha = 0.1,
-      color = :darkorange, linewidth = 6, linestyle = :solid,
-      label = "Other forcing random walk modern (95%)")
+    ribbon = (feedback_mean0_O_rw .- feedback_lo0_O_rw, feedback_hi0_O_rw .- feedback_mean0_O_rw),
+    fillalpha = 0.1,
+    color = :darkorange, linewidth = 6, linestyle = :solid,
+    label = "Other forcing random walk modern (95%)")
 
 plot!(pFw, pCO2_grid, feedback_mean0_inc_fsr;
-      ribbon = (feedback_mean0_inc_fsr .- feedback_lo0_inc_fsr, feedback_hi0_inc_fsr .- feedback_mean0_inc_fsr),
-      fillalpha = 0.1,
-      color = :seagreen, linewidth = 6, linestyle = :solid,
-      label = "Increased degassing bounds modern (95%)")
+    ribbon = (feedback_mean0_inc_fsr .- feedback_lo0_inc_fsr, feedback_hi0_inc_fsr .- feedback_mean0_inc_fsr),
+    fillalpha = 0.1,
+    color = :seagreen, linewidth = 6, linestyle = :solid,
+    label = "Increased degassing bounds modern (95%)")
 
 #Eocene curves
 plot!(pFw, pCO2_grid, feedback_mean5_base;
-      ribbon = (feedback_mean5_base .- feedback_lo5_base, feedback_hi5_base .- feedback_mean5_base),
-      fillalpha = 0.3, linestyle = :dash,
-      color = :red3, linewidth = 6,
-      label = "Base case Eocene (95%)")
+    ribbon = (feedback_mean5_base .- feedback_lo5_base, feedback_hi5_base .- feedback_mean5_base),
+    fillalpha = 0.3, linestyle = :dash,
+    color = :coral1, linewidth = 6,
+    label = "Base case Eocene (95%)")
 
 plot!(pFw, pCO2_grid, feedback_mean5_inc_u;
-      ribbon = (feedback_mean5_inc_u .- feedback_lo5_inc_u, feedback_hi5_inc_u .- feedback_mean5_inc_u),
-      fillalpha = 0.05, linestyle = :dash,
-      color = :dodgerblue, linewidth = 6,
-      label = "Inflated uncertainties Eocene (95%)")
+    ribbon = (feedback_mean5_inc_u .- feedback_lo5_inc_u, feedback_hi5_inc_u .- feedback_mean5_inc_u),
+    fillalpha = 0.05, linestyle = :dash,
+    color = :skyblue, linewidth = 6,
+    label = "Inflated uncertainties Eocene (95%)")
 
 plot!(pFw, pCO2_grid, feedback_mean5_O_rw;
-      ribbon = (feedback_mean5_O_rw .- feedback_lo5_O_rw, feedback_hi5_O_rw .- feedback_mean5_O_rw),
-      fillalpha = 0.05, linestyle = :dash,
-      color = :darkorange, linewidth = 6,
-      label = "Other forcing random walk Eocene (95%)")
+    ribbon = (feedback_mean5_O_rw .- feedback_lo5_O_rw, feedback_hi5_O_rw .- feedback_mean5_O_rw),
+    fillalpha = 0.05, linestyle = :dash,
+    color = :orange2, linewidth = 6,
+    label = "Other forcing random walk Eocene (95%)")
 
 plot!(pFw, pCO2_grid, feedback_mean5_inc_fsr;
-      ribbon = (feedback_mean5_inc_fsr .- feedback_lo5_inc_fsr, feedback_hi5_inc_fsr .- feedback_mean5_inc_fsr),
-      fillalpha = 0.05, linestyle = :dash,
-      color = :seagreen, linewidth = 6,
-      label = "Increased degassing bounds Eocene (95%)")
+    ribbon = (feedback_mean5_inc_fsr .- feedback_lo5_inc_fsr, feedback_hi5_inc_fsr .- feedback_mean5_inc_fsr),
+    fillalpha = 0.05, linestyle = :dash,
+    color = :seagreen3, linewidth = 6,
+    label = "Increased degassing bounds Eocene (95%)")
 
 #display(pFw)
 
@@ -1328,53 +1329,53 @@ GEOCARB = G0 .* (r.^Q) .* (1 .+ Q .* log.(r .* (2 .* r ./ (1 .+ r)).^0.4))
 
 #Walker et al. (1981)
 plot!(pFw, pCO2_grid, w_81;
-      fillalpha=0.0, color=:steelblue4, lw=2, linestyle=:dashdot,
-      label="Walker et al. 1981")
+    fillalpha=0.0, color=:steelblue4, lw=2, linestyle=:dashdot,
+    label="Walker et al. 1981")
 
 #Krissansen-Totton & Catling (2017) nominal model
 plot!(pFw, pCO2_grid, KT17;
-      color=:gold1, linestyle=:dashdot, lw=2,
-      label="Krissansen-Totton & Catling 2017 (nominal)")
+    color=:gold1, linestyle=:dashdot, lw=2,
+    label="Krissansen-Totton & Catling 2017 (nominal)")
 
 #Krissansen-Totton & Catling (2017) Michaelis–Menten law
 plot!(pFw, pCO2_grid, KT17_MM;
-      color=:gold1, linestyle=:dot, lw=2,
-      label="KT17 Michaelis Menten")
+    color=:gold1, linestyle=:dot, lw=2,
+    label="KT17 Michaelis Menten")
 
 #Herbert et al. (2022)
 plot!(pFw, pCO2_grid, H22;
-      color=:magenta1, linestyle=:dashdot, lw=2, 
-      label="Herbert et al. 2022")
+    color=:magenta1, linestyle=:dashdot, lw=2, 
+    label="Herbert et al. 2022")
 
 #Ea = 5.5
 plot!(pFw, pCO2_grid, w_Ea_5_5;
-      color=:orangered4, linestyle=:solid, lw=2,
-      label="Ea = 5.5")
+    color=:orangered4, linestyle=:solid, lw=2,
+    label="Ea = 5.5")
 
 #Uchikawa & Zeebe (2008) default feedback
 plot!(pFw, pCO2_grid, UZ2;
-      fillalpha=0.0, color=:black, linestyle=:dashdot, lw=2,
-      label="Uchikawa & Zeebe 2008 (default)")
+    fillalpha=0.0, color=:black, linestyle=:dashdot, lw=2,
+    label="Uchikawa & Zeebe 2008 (default)")
 
 #Uchikawa & Zeebe (2008) strong feedback
 plot!(pFw, pCO2_grid, UZ6;
-      fillalpha=0.0, color=:black, linestyle=:dashdot, lw=2,
-      label="Uchikawa & Zeebe 2008 (strong)")
+    fillalpha=0.0, color=:black, linestyle=:dashdot, lw=2,
+    label="Uchikawa & Zeebe 2008 (strong)")
 
 #Caves et al. (2016) modern
 plot!(pFw, pCO2_grid, CM;
-      fillalpha=0.0, color=:darkseagreen, lw=2, linestyle=:dashdot,
-      label="Caves et al. 2016 (modern)")
+    fillalpha=0.0, color=:darkseagreen, lw=2, linestyle=:dashdot,
+    label="Caves et al. 2016 (modern)")
 
 #Walker & Kasting (1992)
 plot!(pFw, pCO2_grid, CE;
-      fillalpha=0.0, color=:darkgreen, lw=2, linestyle=:dashdot,
-      label="Walker & Kasting 1992")
+    fillalpha=0.0, color=:darkgreen, lw=2, linestyle=:dashdot,
+    label="Walker & Kasting 1992")
 
 #GEOCARB
 plot!(pFw, pCO2_grid, GEOCARB;
-      fillalpha=0.0, color=:rosybrown4, lw=2, linestyle=:dashdot,
-      label="GEOCARB")
+    fillalpha=0.0, color=:rosybrown4, lw=2, linestyle=:dashdot,
+    label="GEOCARB")
 
 ylims!(pFw, (6.6, 15.0))
 #display(pFw)
@@ -1385,12 +1386,179 @@ annotate!(pwT, x1 + 0.02*(x2-x1), y2 - 0.03*(y2-y1), text("A", 35))
 (x1, x2) = xlims(pFw); (y1, y2) = ylims(pFw)
 annotate!(pFw, x1 + 0.02*(x2-x1), y2 - 0.03*(y2-y1), text("B", 35))
 
-p_combined_feedback_w = plot(pwT, pFw;
-    layout = (2, 1),
-    size   = (1200, 1600),
+
+#******* final w uncertainty bars *******
+w_mean_final = [
+    w_mean_base[end],
+    w_mean_inc_u[end],
+    w_mean_const[end],
+    w_mean_O_rw[end],
+    w_mean_inc_fsr[end],
+]
+
+w_lo_final = [
+    w_lo_base[end],
+    w_lo_inc_u[end],
+    w_lo_const[end],
+    w_lo_O_rw[end],
+    w_lo_inc_fsr[end],
+]
+
+w_hi_final = [
+    w_hi_base[end],
+    w_hi_inc_u[end],
+    w_hi_const[end],
+    w_hi_O_rw[end],
+    w_hi_inc_fsr[end],
+]
+
+w_err_low  = w_mean_final .- w_lo_final
+w_err_high = w_hi_final .- w_mean_final
+
+colors_w = [
+    :red3,
+    :dodgerblue,
+    :purple,
+    :darkorange,
+    :seagreen,
+]
+
+xw = 1:length(w_mean_final)
+
+pw_bar = plot(
+    xlabel = "",
+    ylabel = "",
+    title = "",
+    legend = false,
+    grid = true,
+    framestyle = :box,
+    size = (400, 800),
     margin = 0mm,
-    left_margin   = 13mm, right_margin  = 10mm,
-    bottom_margin = 5mm,  top_margin    = 6mm,
+    left_margin = 8mm,
+    right_margin = 6mm,
+    bottom_margin = 12mm,
+    top_margin = 6mm,
+    guide_padding = 4mm,
+    xticks = (xw, fill("", length(xw))),
+    yticks = 0:5:35,
+    yformatter = _ -> "",
+    ylims = (3, 37),
+)
+
+for i in eachindex(xw)
+    scatter!(pw_bar, [xw[i]], [w_mean_final[i]];
+        yerror = ([w_err_low[i]], [w_err_high[i]]),
+        ms = 8,
+        msw = 0,
+        color = colors_w[i],
+        markerstrokecolor = colors_w[i],
+        lw = 3,
+        label = false
+    )
+end
+
+display(pw_bar)
+
+#******* final Fw uncertainty bars *******
+Fw_mean_final = [
+    feedback_mean0_base[end],
+    feedback_mean0_inc_u[end],
+    feedback_mean_const_w[end],
+    feedback_mean0_O_rw[end],
+    feedback_mean0_inc_fsr[end],
+    feedback_mean5_base[end],
+    feedback_mean5_inc_u[end],
+    feedback_mean5_O_rw[end],
+    feedback_mean5_inc_fsr[end],
+]
+
+Fw_lo_final = [
+    feedback_lo0_base[end],
+    feedback_lo0_inc_u[end],
+    feedback_lo_const_w[end],
+    feedback_lo0_O_rw[end],
+    feedback_lo0_inc_fsr[end],
+    feedback_lo5_base[end],
+    feedback_lo5_inc_u[end],
+    feedback_lo5_O_rw[end],
+    feedback_lo5_inc_fsr[end],
+]
+
+Fw_hi_final = [
+    feedback_hi0_base[end],
+    feedback_hi0_inc_u[end],
+    feedback_hi_const_w[end],
+    feedback_hi0_O_rw[end],
+    feedback_hi0_inc_fsr[end],
+    feedback_hi5_base[end],
+    feedback_hi5_inc_u[end],
+    feedback_hi5_O_rw[end],
+    feedback_hi5_inc_fsr[end],
+]
+
+Fw_err_low  = Fw_mean_final .- Fw_lo_final
+Fw_err_high = Fw_hi_final .- Fw_mean_final
+
+colors_C = [
+    :red3,
+    :dodgerblue,
+    :purple,
+    :darkorange,
+    :seagreen,
+    :coral1,
+    :skyblue,
+    :orange2,
+    :seagreen3,
+]
+
+xC = 1:length(Fw_mean_final)
+
+pFw_bar = plot(
+    xlabel = "",
+    ylabel = "",
+    title = "",
+    legend = false,
+    grid = true,
+    framestyle = :box,
+    size = (400, 800),
+    margin = 0mm,
+    left_margin = 8mm,
+    right_margin = 6mm,
+    bottom_margin = 12mm,
+    top_margin = 6mm,
+    guide_padding = 4mm,
+    xticks = (xC, fill("", length(xC))),
+    #yticks = :none,
+    yformatter = _ -> ""
+)
+
+for i in eachindex(xC)
+    scatter!(pFw_bar, [xC[i]], [Fw_mean_final[i]];
+        yerror = ([Fw_err_low[i]], [Fw_err_high[i]]),
+        ylims = (6.6, 15.0),
+        ms = 8,
+        msw = 0,
+        color = colors_C[i],
+        markerstrokecolor = colors_C[i],
+        lw = 3,
+        label = false
+    )
+end
+
+display(pFw_bar)
+
+l = @layout [a{0.8w} b{0.2w}
+             c{0.8w} d{0.2w}]
+
+p_combined_feedback_w = plot(
+    pwT, pw_bar, pFw, pFw_bar;
+    layout = l,
+    size = (1600, 1600),
+    margin = 0mm,
+    left_margin = 13mm,
+    right_margin = 0mm,
+    bottom_margin = 5mm,
+    top_margin = 6mm,
     guide_padding = 0mm,
     framestyle = :box
 )
@@ -1475,52 +1643,52 @@ pG = plot(; legend = :topleft, xlabel = "Age (myr)", ylabel = "Tmol C per yr",
     framestyle = :box,
     size = (1200, 800),
     margin = 0mm,
-    left_margin = 8mm, right_margin = 6mm,
+    left_margin = 8mm, right_margin = 8mm,
     bottom_margin = 8mm, top_margin = 6mm,
-    guide_padding = 4mm
+    guide_padding = 4mm, widen = false
 )
 
 plot!(pG, t, G_mean_base;
-      ribbon = (G_mean_base .- G_lo_base, G_hi_base .- G_mean_base),
-      fillalpha = 0.5,
-      color = :red3, linewidth = 6,
-      label = "Base case (95%)")
+    ribbon = (G_mean_base .- G_lo_base, G_hi_base .- G_mean_base),
+    fillalpha = 0.5,
+    color = :red3, linewidth = 6,
+    label = "Base case (95%)")
 
 plot!(pG, t, G_mean_inc_u;
-      ribbon = (G_mean_inc_u .- G_lo_inc_u, G_hi_inc_u .- G_mean_inc_u),
-      fillalpha = 0.2,
-      color = :dodgerblue, linewidth = 6,
-      label = "Inflated uncertainties (95%)")
+    ribbon = (G_mean_inc_u .- G_lo_inc_u, G_hi_inc_u .- G_mean_inc_u),
+    fillalpha = 0.2,
+    color = :dodgerblue, linewidth = 6,
+    label = "Inflated uncertainties (95%)")
 
 plot!(pG, t, G_mean_const_w;
-      ribbon = (G_mean_const_w .- G_lo_const_w, G_hi_const_w .- G_mean_const_w),
-      fillalpha = 0.2,
-      color = :purple, linewidth = 6,
-      label = "Constant weathering sensitivity (95%)")
+    ribbon = (G_mean_const_w .- G_lo_const_w, G_hi_const_w .- G_mean_const_w),
+    fillalpha = 0.2,
+    color = :purple, linewidth = 6,
+    label = "Constant weathering sensitivity (95%)")
 
 plot!(pG, t, G_mean_O_rw;
-      ribbon = (G_mean_O_rw .- G_lo_O_rw, G_hi_O_rw .- G_mean_O_rw),
-      fillalpha = 0.2,
-      color = :darkorange, linewidth = 6,
-      label = "Other forcing random walk (95%)")
+    ribbon = (G_mean_O_rw .- G_lo_O_rw, G_hi_O_rw .- G_mean_O_rw),
+    fillalpha = 0.2,
+    color = :darkorange, linewidth = 6,
+    label = "Other forcing random walk (95%)")
 
 plot!(pG, t, G_mean_inc_fsr;
-      ribbon = (G_mean_inc_fsr .- G_lo_inc_fsr, G_hi_inc_fsr .- G_mean_inc_fsr),
-      fillalpha = 0.2,
-      color = :seagreen, linewidth = 6,
-      label = "Increased degassing bounds (95%)")
+    ribbon = (G_mean_inc_fsr .- G_lo_inc_fsr, G_hi_inc_fsr .- G_mean_inc_fsr),
+    fillalpha = 0.2,
+    color = :seagreen, linewidth = 6,
+    label = "Increased degassing bounds (95%)")
 
 plot!(pG, t, G0_lo_vals;
-      color = :black, linewidth = 6,
-      label = "prior bounds")
+    color = :black, linewidth = 6,
+    label = "prior bounds")
 
 plot!(pG, t, G0_hi_vals;
-      color = :black, linewidth = 6,
-      label = false)
+    color = :black, linewidth = 6,
+    label = false)
 
 plot!(pG, t, G0_mean_vals;
-      color = :black, linewidth = 6,
-      label = false)
+    color = :black, linewidth = 6,
+    label = false)
 
 display(p_combined_C_T)
 display(p_combined_ESS_O)
@@ -1528,7 +1696,7 @@ display(p_combined_feedback_w)
 display(pG)
 #******* saving final figures *******
 
-#savefig(p_combined_C_T, joinpath(homedir(), "Downloads", "RK_C_T_final.pdf"))
-#savefig(p_combined_ESS_O, joinpath(homedir(), "Downloads", "RK_ESS_final.pdf"))
-#savefig(p_combined_feedback_w, joinpath(homedir(), "Downloads", "RK_feedback_final.pdf"))
-#savefig(pG, joinpath(homedir(), "Downloads", "RK_degassing_final.pdf"))
+savefig(p_combined_C_T, joinpath(homedir(), "Downloads", "RK_C_T_final.pdf"))
+savefig(p_combined_ESS_O, joinpath(homedir(), "Downloads", "RK_ESS_final.pdf"))
+savefig(p_combined_feedback_w, joinpath(homedir(), "Downloads", "RK_feedback_final.pdf"))
+savefig(pG, joinpath(homedir(), "Downloads", "RK_degassing_final.pdf"))
