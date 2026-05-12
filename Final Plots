@@ -1034,7 +1034,7 @@ display(pwT)
 
 #******* feedback plot ******* 
 function model_feedback_post(chain, t;
-    target = 660.0 / 1e2,
+    target = 600.0 / 1e2,
     tol = 10.0 / 1e2,
     eocene_age = 5.0,
     pCO2_grid = range(280.0, 2000.0; length = 300)
@@ -1116,7 +1116,7 @@ function model_feedback_post(chain, t;
 end
 
 #seperate calculation for constant w 
-target = 660.0 / 1e2
+target = 600.0 / 1e2
 tol = 10.0 / 1e2
 
 pCO2_grid = range(280.0, 2000.0; length = 300)
@@ -1271,113 +1271,27 @@ plot!(pFw, pCO2_grid, feedback_mean5_inc_fsr;
 #display(pFw)
 
 
-G0 = 6.6
+G0 = 6.0
 #r = pCO2/ pCO2_0 written as R in Berner models and elsewhere
 r = pCO2_grid ./ 280.0
-
-#Walker et al. (1981)
-#note that the ESS formulation used here is from Walker et al. (1981)
-w_81 = G0 .* (r.^0.3) .* exp.((4.6 .* r.^0.364 .- 4.6) ./ 13.7)
-
 #Uchikawa & Zeebe (2008) n = 0.2
 UZ2 = G0 .* r.^0.2
 #UZ4 = quantile_band(G0_col .* r.^0.4)
 #Uchikawa & Zeebe (2008) n = 0.6
 UZ6 = G0 .* r.^0.6
 
-#Caves et al. (2016) modern
-#note that Caves Eocene values were not plotted as that feedback formulation does not go through the origin
-CM = G0 .* (log2.(r) .+ 1)
-
-#Walker & Kasting (1992)
-CE = G0 .* r.^0.3
-
-#Krissansen-Totton & Catling (2017)
-KT17 = vec(6.6 .* (((r)'.^0.33) .* exp.((log2.(r)'.*5.6) ./ 34)))
-KT17_MM = vec(6.6 .* (((2 .* (r)') ./ (1 .+ (r)')).^0.41) .* exp.((log2.(pCO2_grid ./ 280.0)'.*5.6) ./ 31))
-
-#Herbert et al. (2022)
-#note this is rescaled (Herbert et al. 2022 use Fwsil0 = 5 Tmol/yr
-Ea = 4
-EarthSen = 6.5
-#Ea = ActE # activation energy of silicate dissolution
-ESS = EarthSen # deltaT per doubling pCO2
-temp1 = 1000 .* (Ea .* 4.184) ./ (8.314 .* 288 .* 288) # gas constant 8.314 J/(mol/K), modern average temperatue 288K
-temp2 = ESS ./ log(2)
-wf = exp.(temp1 .* log.(pCO2_grid ./ 280.0) .* temp2)#; # weathering feedback
-
-H22 = vec(6.6 .* wf)
-
-#Upper limit Ea for the base case
-Ea5_5 = 5.5
-EarthSen = 6.5
-
-#Ea = ActE # activation energy of silicate dissolution
-ESS = EarthSen # deltaT per doubling pCO2
-temp1_5_5 = 1000 .* (Ea5_5 .* 4.184) ./ (8.314 .* 288 .* 288) # gas constant 8.314 J/(mol7K), modern average temperatue 288K
-temp2_5_5 = ESS ./ log(2)
-#wf = exp(temp1*log(x(3)/55e15)* temp2); # weathering feedback
-wf_5_5 = exp.(temp1_5_5 .* log.(pCO2_grid ./ 280.0) .* temp2_5_5)#; # weathering feedback
-
-w_Ea_5_5 = vec(6.6 .* wf_5_5)
-
-#GEOCARB
-G, Z = 3.3, 0.09
-Q = G * Z
-GEOCARB = G0 .* (r.^Q) .* (1 .+ Q .* log.(r .* (2 .* r ./ (1 .+ r)).^0.4))
-
-
-#Walker et al. (1981)
-plot!(pFw, pCO2_grid, w_81;
-    fillalpha=0.0, color=:steelblue4, lw=2, linestyle=:dashdot,
-    label="Walker et al. 1981")
-
-#Krissansen-Totton & Catling (2017) nominal model
-plot!(pFw, pCO2_grid, KT17;
-    color=:gold1, linestyle=:dashdot, lw=2,
-    label="Krissansen-Totton & Catling 2017 (nominal)")
-
-#Krissansen-Totton & Catling (2017) Michaelis–Menten law
-plot!(pFw, pCO2_grid, KT17_MM;
-    color=:gold1, linestyle=:dot, lw=2,
-    label="KT17 Michaelis Menten")
-
-#Herbert et al. (2022)
-plot!(pFw, pCO2_grid, H22;
-    color=:magenta1, linestyle=:dashdot, lw=2, 
-    label="Herbert et al. 2022")
-
-#Ea = 5.5
-plot!(pFw, pCO2_grid, w_Ea_5_5;
-    color=:orangered4, linestyle=:solid, lw=2,
-    label="Ea = 5.5")
 
 #Uchikawa & Zeebe (2008) default feedback
 plot!(pFw, pCO2_grid, UZ2;
-    fillalpha=0.0, color=:black, linestyle=:dashdot, lw=2,
+    fillalpha=0.0, color=:black, linestyle=:solid, lw=6,
     label="Uchikawa & Zeebe 2008 (default)")
 
 #Uchikawa & Zeebe (2008) strong feedback
 plot!(pFw, pCO2_grid, UZ6;
-    fillalpha=0.0, color=:black, linestyle=:dashdot, lw=2,
+    fillalpha=0.0, color=:black, linestyle=:dash, lw=6,
     label="Uchikawa & Zeebe 2008 (strong)")
 
-#Caves et al. (2016) modern
-plot!(pFw, pCO2_grid, CM;
-    fillalpha=0.0, color=:darkseagreen, lw=2, linestyle=:dashdot,
-    label="Caves et al. 2016 (modern)")
-
-#Walker & Kasting (1992)
-plot!(pFw, pCO2_grid, CE;
-    fillalpha=0.0, color=:darkgreen, lw=2, linestyle=:dashdot,
-    label="Walker & Kasting 1992")
-
-#GEOCARB
-plot!(pFw, pCO2_grid, GEOCARB;
-    fillalpha=0.0, color=:rosybrown4, lw=2, linestyle=:dashdot,
-    label="GEOCARB")
-
-ylims!(pFw, (6.6, 15.0))
+ylims!(pFw, (6.0, 15.0))
 #display(pFw)
 
 (x1, x2) = xlims(pwT); (y1, y2) = ylims(pwT)
@@ -1535,7 +1449,7 @@ pFw_bar = plot(
 for i in eachindex(xC)
     scatter!(pFw_bar, [xC[i]], [Fw_mean_final[i]];
         yerror = ([Fw_err_low[i]], [Fw_err_high[i]]),
-        ylims = (6.6, 15.0),
+        ylims = (6.0, 15.0),
         ms = 8,
         msw = 0,
         color = colors_C[i],
@@ -1634,7 +1548,7 @@ G_hi_inc_fsr = mapslices(q -> quantile(q, 0.975), G_post_inc_fsr; dims = 2)[:]
 
 
 
-pG = plot(; legend = :topleft, xlabel = "Age (myr)", ylabel = "Tmol C per yr",
+pG = plot(; legend = :topleft, xlabel = "Age (myr)", ylabel = " Δ Tmol C per yr",
     color = :red3,
     title = "Change in Volcanic Degassing Posterior",
     label = false,
@@ -1696,7 +1610,7 @@ display(p_combined_feedback_w)
 display(pG)
 #******* saving final figures *******
 
-savefig(p_combined_C_T, joinpath(homedir(), "Downloads", "RK_C_T_final.pdf"))
-savefig(p_combined_ESS_O, joinpath(homedir(), "Downloads", "RK_ESS_final.pdf"))
-savefig(p_combined_feedback_w, joinpath(homedir(), "Downloads", "RK_feedback_final.pdf"))
-savefig(pG, joinpath(homedir(), "Downloads", "RK_degassing_final.pdf"))
+#savefig(p_combined_C_T, joinpath(homedir(), "Downloads", "RK_C_T_final.pdf"))
+#savefig(p_combined_ESS_O, joinpath(homedir(), "Downloads", "RK_ESS_final.pdf"))
+#savefig(p_combined_feedback_w, joinpath(homedir(), "Downloads", "RK_feedback_final.pdf"))
+#savefig(pG, joinpath(homedir(), "Downloads", "RK_degassing_final.pdf"))
